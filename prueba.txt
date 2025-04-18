@@ -1,0 +1,14 @@
+init {
+    a1, b1 : float
+    variable1 : int
+    p1, p2, p3 : string
+}
+
+a1 := 99.5
+b := "@sdADaSjfla%dfg"
+
+#+ ESTO ES UN COMENTARIO +#
+
+read(base)
+reorder([x+3, 1+1, 9-x],1,2)
+x = sumFirstPrimes(5)
