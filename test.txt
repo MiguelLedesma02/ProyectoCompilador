@@ -4,3 +4,4 @@ init {
     p1, p2, p3 : string
 }
 
+variable1 := 30;

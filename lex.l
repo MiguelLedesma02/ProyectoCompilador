@@ -7,18 +7,32 @@ FILE *yyin;
 char *yytext;
 
 /*CONSTANTES*/
-int MAX_LONG_ID   = 30;
-int MAX_LONG_STR  = 50;
-int MIN_VALOR_INT = -32768;
-int MAX_VALOR_INT = 32767;
-float MIN_VALOR_FLOAT = -3.4028235e38;
-float MAX_VALOR_FLOAT = 3.4028235e38;
+#define MAX_LONG_ID 30
+#define MAX_LONG_STR 50
+#define MAX_LONG_TD 10
+#define MIN_VALOR_INT -32768
+#define MAX_VALOR_INT 32767
+#define MIN_VALOR_FLOAT -3.4028235e38
+#define MAX_VALOR_FLOAT 3.4028235e38
+
+typedef struct
+{
+    char nombre[MAX_LONG_ID];
+    char tipoDato[MAX_LONG_TD];
+    char valor[MAX_LONG_STR];
+    unsigned longitud;
+} entrada_ts;
 
 /*FUNCIONES*/
+int agregarTablaSimbolos(char* tk, int id);
+int abrirArchivo(FILE** pf, char* nombreArchivo, char* modo);
+int buscarTokenEnArchivo(FILE* pf, char* tk);
+
 int verificarLongId(char*);
 int verificarLongString(char*);
 int verificarRangoInt(char* tk);
 int verificarRangoFloat(char* tk);
+
 int yyerror(void);
 
 %}
@@ -109,10 +123,14 @@ DOS_PUNTOS        ":"
 {READ}            { printf("READ: %s\n", yytext); }
 {WRITE}           { printf("WRITE: %s\n", yytext); }
 
-{IDENTIFICADOR}   { if(verificarLongId(yytext) == 0){ printf("IDENTIFICADOR: %s\n", yytext); } }
-{CONST_INT}       { if(verificarRangoInt(yytext) == 0){ printf("CONST_INT: %s\n", yytext); } }
-{CONST_FLOAT}     { if(verificarRangoFloat(yytext) == 0){ printf("CONST_FLOAT: %s\n", yytext); } }
-{CONST_STRING}    { if(verificarLongString(yytext) == 0){ printf("CONST_STRING: %s\n", yytext); } }  
+{IDENTIFICADOR}   { if(verificarLongId(yytext) == 0){ printf("IDENTIFICADOR: %s\n", yytext);agregarTablaSimbolos(yytext, 1); } }
+{CONST_INT}       { if(verificarRangoInt(yytext) == 0){ printf("CONST_INT: %s\n", yytext);
+agregarTablaSimbolos(yytext, 0); } }
+{CONST_FLOAT}     { if(verificarRangoFloat(yytext) == 0){ printf("CONST_FLOAT: %s\n", yytext); 
+agregarTablaSimbolos(yytext, 0); } }
+{CONST_STRING}    { if(verificarLongString(yytext) == 0){ printf("CONST_STRING: %s\n", yytext);
+agregarTablaSimbolos(yytext, 0); } }  
+
 {OP_ASIG}         { printf("OP_ASIG: %s\n", yytext); }
 
 {OP_SUMA}         { printf("OP_SUMA: %s\n", yytext); }
@@ -150,9 +168,10 @@ DOS_PUNTOS        ":"
 
 int main (int argc, char* argv[])
 {
-    if ( (yyin = fopen (argv[1], "rt")) == NULL)
-        printf("No se pudo abrir el archivo %s\n", argv[1]);
     
+    if(abrirArchivo(&yyin, argv[1], "rt") == 1)
+        return 1;
+
     printf("\n\n");
     yylex();
     printf("\n\n");
@@ -162,10 +181,88 @@ int main (int argc, char* argv[])
     return 0;
 }
 
+/*Tabla de Símbolos*/
+int agregarTablaSimbolos (char* tk, int id)
+{
+    /* tk es el lexema */
+    /* var se usa como boolean. Si es 1 es un campo ID, si no es un campo CONST */
+
+    FILE *ts;
+    entrada_ts entrada;
+
+    if(abrirArchivo(&ts, "symbol_table.txt", "a+t") == 1)
+        return 1;
+
+    /*Si ya se encuentra el token, me voy*/
+    if(buscarTokenEnArchivo(ts, tk) == 1)
+    {
+        fclose(ts);
+
+        return 0;
+    }
+
+    strcpy(entrada.nombre, tk);
+    entrada.longitud = strlen(tk);
+    strcpy(entrada.tipoDato, "-"); //En este punto no se puede saber
+
+    /*Si es ID, en valor no se pone nada, si es CONST, se pone el lexema*/
+    if(id == 1)
+        strcpy(entrada.valor, "-");
+    else
+        strcpy(entrada.valor, tk);
+
+    fprintf(ts, "%s|%s|%d|%s\n", entrada.nombre, entrada.tipoDato, entrada.longitud, entrada.valor);
+
+    fclose(ts);
+
+    return 0;
+}
+
+/*Funciones de archivo*/
+int abrirArchivo(FILE** pf, char* nombreArchivo, char* modo)
+{
+    /* *pf es el puntero al archivo */
+    /* tk es el lexema */
+
+    *pf = fopen(nombreArchivo, modo);
+
+    if (*pf == NULL) {
+        printf("No se pudo abrir el archivo %s\n");
+        return yyerror();
+    }
+
+    return 0;
+}
+
+int buscarTokenEnArchivo(FILE* pf, char* tk)
+{
+    /*Si ya está escrito el token retorna 0, si no retorna 1.*/
+    /* *pf es el puntero al archivo */
+    /* tk es el lexema */
+
+    char linea[sizeof(entrada_ts)];
+
+    rewind(pf);
+
+    while (fscanf(pf, "%s", linea) != EOF)
+    {
+
+        char* campo = strtok(linea, "|");
+
+        if (campo != NULL && strcmp(campo, tk) == 0)
+            return 1;
+
+    }
+
+    return 0;
+}
+
 /*Funciones de validación*/
 
 int verificarLongId(char* tk)
 {
+    /* tk es el lexema */
+
     if(strlen(tk) <= MAX_LONG_ID)
         return 0;
     
@@ -176,6 +273,8 @@ int verificarLongId(char* tk)
 
 int verificarLongString(char* tk)
 {
+    /* tk es el lexema */
+
     if(strlen(tk) <= MAX_LONG_STR)
         return 0;
 
@@ -186,6 +285,8 @@ int verificarLongString(char* tk)
 
 int verificarRangoInt(char* tk)
 {
+    /* tk es el lexema */
+
     int valor = atoi(tk);
 
     if(valor >= MIN_VALOR_INT && valor <= MAX_VALOR_INT)
@@ -198,6 +299,8 @@ int verificarRangoInt(char* tk)
 
 int verificarRangoFloat(char* tk)
 {
+    /* tk es el lexema */
+
     int valor = atof(tk);
 
     if(valor >= MIN_VALOR_FLOAT && valor <= MAX_VALOR_FLOAT)
