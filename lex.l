@@ -65,6 +65,16 @@ WHILE             "while"
 INIT              "init"
 READ              "read"
 WRITE             "write"
+REORDER           "reorder"
+SUMFIRSTPRIMES    "sumFirstPrimes"
+ASIGCOMP          "AsigComp"
+CONT              "!cont"
+SET               "set" 
+SWITCH            "switch"
+CASE              "case"
+ELSECASE          "elsecase"
+ENDSETCASE        "endsetcase"
+FIB               "fib"          
 
 /*Tokens básicos*/
 
@@ -74,6 +84,7 @@ CONST_FLOAT       "-"?{DIGITO}+"."{DIGITO}+([eE][-+]?{DIGITO}+)?
 CONST_STRING      \"[^\n"]*\"
 OP_ASIG           ":="
 COMENTARIO        "#+"([^\n]|\n)*"+#"
+EQ                "="
 
 /*Operadores aritméticos*/
 
@@ -105,6 +116,7 @@ LLA_CL            "}"
 COMA              ","
 PUNTO_Y_COMA      ";"
 DOS_PUNTOS        ":"
+DOBLE_DOS_PUNTOS  "::"
 
 %%
 
@@ -122,6 +134,16 @@ DOS_PUNTOS        ":"
 {INIT}            { printf("INIT: %s\n", yytext); }
 {READ}            { printf("READ: %s\n", yytext); }
 {WRITE}           { printf("WRITE: %s\n", yytext); }
+{REORDER}         { printf("REORDER: %s\n", yytext); }
+{SUMFIRSTPRIMES}  { printf("SUMFIRSTPRIMES: %s\n", yytext); }
+{ASIGCOMP}        { printf("ASIGCOMP: %s\n", yytext); }
+{CONT}            { printf("CONT: %s\n", yytext); }
+{SET}             { printf("SET: %s\n", yytext); }
+{SWITCH}          { printf("SWITCH: %s\n", yytext); }
+{CASE}            { printf("CASE: %s\n", yytext); }
+{ELSECASE}        { printf("ELSECASE: %s\n", yytext); }
+{ENDSETCASE}      { printf("ENDSETCASE: %s\n", yytext); }
+{FIB}             { printf("FIB: %s\n", yytext); }
 
 {IDENTIFICADOR}   { if(verificarLongId(yytext) == 0){ printf("IDENTIFICADOR: %s\n", yytext);agregarTablaSimbolos(yytext, 1); } }
 {CONST_INT}       { if(verificarRangoInt(yytext) == 0){ printf("CONST_INT: %s\n", yytext);
@@ -132,6 +154,7 @@ agregarTablaSimbolos(yytext, 0); } }
 agregarTablaSimbolos(yytext, 0); } }  
 
 {OP_ASIG}         { printf("OP_ASIG: %s\n", yytext); }
+{EQ}              { printf("EQ: %s\n", yytext); }
 
 {OP_SUMA}         { printf("OP_SUMA: %s\n", yytext); }
 {OP_RESTA}        { printf("OP_RESTA: %s\n", yytext); }
@@ -155,6 +178,7 @@ agregarTablaSimbolos(yytext, 0); } }
 {COMA}            { printf("COMA: %s\n", yytext); }
 {PUNTO_Y_COMA}    { printf("PUNTO_Y_COMA: %s\n", yytext); }
 {DOS_PUNTOS}      { printf("DOS_PUNTOS: %s\n", yytext); }
+{DOBLE_DOS_PUNTOS} { printf("DOBLE_DOS_PUNTOS: %s\n", yytext); }
 
 {COMENTARIO}
 " "             		
