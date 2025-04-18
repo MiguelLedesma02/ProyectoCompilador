@@ -91,7 +91,7 @@ EQ                "="
 OP_SUMA           "+"
 OP_RESTA          "-"
 OP_PRODUCTO       "*"
-OP_COCIENTE       "-"
+OP_COCIENTE       "/"
 
 /*Operadores lógicos*/
 
