@@ -1,13 +1,10 @@
-#!/bin/bash
-
-# Compilar con flex
-flex lex.l
-
-# Compilar el archivo generado con GCC
-gcc lex.yy.c -o compilador
-
-# Ejecutar el compilador con test.txt
-./compilador test.txt
-
-# Borrar archivos generados
-rm -f compilador lex.yy.c
+## Script para Unix
+flex Lexico.l
+bison -dyv Sintactico.y
+gcc lex.yy.c y.tab.c -o compilador
+./compilador prueba.txt
+rm lex.yy.c
+rm y.tab.c
+rm y.output
+rm y.tab.h
+rm compilador
