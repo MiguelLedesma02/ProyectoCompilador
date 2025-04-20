@@ -199,9 +199,9 @@ int main(int argc, char *argv[])
         return 0;
 }
 
-int yyerror(void)
+/*int yyerror(void)
      {
        printf("Error Sintactico\n");
 	 exit (1);
      }
-
+*/

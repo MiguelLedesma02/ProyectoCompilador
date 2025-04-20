@@ -336,10 +336,9 @@ int verificarRangoFloat(char* tk)
     return yyerror();
 }
 
-/*
+
 int yyerror(void)
 {
     printf("\nError lexico: Caracter invalido: %s, saliendo...\n", yytext);
     exit(1);
 }
-*/
