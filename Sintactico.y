@@ -191,13 +191,14 @@ int main(int argc, char *argv[])
     }
     else
     { 
-        
+        printf("\n El archivo %s se abrio correctamente\n", argv[1]);
         yyparse();
         
     }
 	fclose(yyin);
         return 0;
 }
+
 int yyerror(void)
      {
        printf("Error Sintactico\n");

@@ -189,7 +189,7 @@ agregarTablaSimbolos(yytext, 0); } }
 .                 printf("ERROR LEXICO en %d - Caracter no reconocido: %s\n", yylineno, yytext);
 
 %%
-
+/*
 int main (int argc, char* argv[])
 {
     
@@ -204,6 +204,7 @@ int main (int argc, char* argv[])
 
     return 0;
 }
+*/
 
 /*Tabla de Símbolos*/
 int agregarTablaSimbolos (char* tk, int id)
@@ -335,7 +336,10 @@ int verificarRangoFloat(char* tk)
     return yyerror();
 }
 
+/*
 int yyerror(void)
 {
+    printf("\nError lexico: Caracter invalido: %s, saliendo...\n", yytext);
     exit(1);
 }
+*/
