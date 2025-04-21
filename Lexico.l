@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "y.tab.h"
 
 FILE *yyin;
 char *yytext;
@@ -78,7 +79,7 @@ FIB               "fib"
 
 /*Tokens básicos*/
 
-IDENTIFICADOR     {LETRA}({LETRA}|{DIGITO}|"_")*
+ID     {LETRA}({LETRA}|{DIGITO}|"_")*
 CONST_INT         "-"?{DIGITO}+
 CONST_FLOAT       "-"?{DIGITO}+"."{DIGITO}+([eE][-+]?{DIGITO}+)?
 CONST_STRING      \"[^\n"]*\"
@@ -120,65 +121,65 @@ DOBLE_DOS_PUNTOS  "::"
 
 %%
 
-{INT}             { printf("INT: %s\n", yytext); }
-{FLOAT}           { printf("FLOAT: %s\n", yytext); }
-{STRING}          { printf("STRING: %s\n", yytext); }
+{INT}             { printf("INT: %s\n", yytext); return INT;}
+{FLOAT}           { printf("FLOAT: %s\n", yytext); return FLOAT;}
+{STRING}          { printf("STRING: %s\n", yytext); return STRING;}
 
-{AND}             { printf("AND: %s\n", yytext); }
-{OR}              { printf("OR: %s\n", yytext); }
-{NOT}             { printf("NOT: %s\n", yytext); }
+{AND}             { printf("AND: %s\n", yytext); return AND;}
+{OR}              { printf("OR: %s\n", yytext); return OR;}
+{NOT}             { printf("NOT: %s\n", yytext); return NOT;}
 
-{IF}              { printf("IF: %s\n", yytext); }
-{ELSE}            { printf("ELSE: %s\n", yytext); }
-{WHILE}           { printf("WHILE: %s\n", yytext); }
-{INIT}            { printf("INIT: %s\n", yytext); }
-{READ}            { printf("READ: %s\n", yytext); }
-{WRITE}           { printf("WRITE: %s\n", yytext); }
-{REORDER}         { printf("REORDER: %s\n", yytext); }
-{SUMFIRSTPRIMES}  { printf("SUMFIRSTPRIMES: %s\n", yytext); }
-{ASIGCOMP}        { printf("ASIGCOMP: %s\n", yytext); }
-{CONT}            { printf("CONT: %s\n", yytext); }
-{SET}             { printf("SET: %s\n", yytext); }
-{SWITCH}          { printf("SWITCH: %s\n", yytext); }
-{CASE}            { printf("CASE: %s\n", yytext); }
-{ELSECASE}        { printf("ELSECASE: %s\n", yytext); }
-{ENDSETCASE}      { printf("ENDSETCASE: %s\n", yytext); }
-{FIB}             { printf("FIB: %s\n", yytext); }
+{IF}              { printf("IF: %s\n", yytext); return IF;}
+{ELSE}            { printf("ELSE: %s\n", yytext); return ELSE;}
+{WHILE}           { printf("WHILE: %s\n", yytext); return WHILE;}
+{INIT}            { printf("INIT: %s\n", yytext); return INIT;}
+{READ}            { printf("READ: %s\n", yytext); return READ;}
+{WRITE}           { printf("WRITE: %s\n", yytext); return WRITE;}
+{REORDER}         { printf("REORDER: %s\n", yytext); return REORDER;}
+{SUMFIRSTPRIMES}  { printf("SUMFIRSTPRIMES: %s\n", yytext); return SUMFIRSTPRIMES;}
+{ASIGCOMP}        { printf("ASIGCOMP: %s\n", yytext); return ASIGCOMP;}
+{CONT}            { printf("CONT: %s\n", yytext); return CONT;}
+{SET}             { printf("SET: %s\n", yytext); return SET;}
+{SWITCH}          { printf("SWITCH: %s\n", yytext); return SWITCH;}
+{CASE}            { printf("CASE: %s\n", yytext); return CASE;}
+{ELSECASE}        { printf("ELSECASE: %s\n", yytext); return ELSECASE;}
+{ENDSETCASE}      { printf("ENDSETCASE: %s\n", yytext); return ENDSETCASE;}
+{FIB}             { printf("FIB: %s\n", yytext); return FIB;}
 
-{IDENTIFICADOR}   { if(verificarLongId(yytext) == 0){ printf("IDENTIFICADOR: %s\n", yytext);agregarTablaSimbolos(yytext, 1); } }
+{ID}   { if(verificarLongId(yytext) == 0){ printf("IDENTIFICADOR: %s\n", yytext);agregarTablaSimbolos(yytext, 1); return ID;} }
 {CONST_INT}       { if(verificarRangoInt(yytext) == 0){ printf("CONST_INT: %s\n", yytext);
-agregarTablaSimbolos(yytext, 0); } }
+agregarTablaSimbolos(yytext, 0); return CONST_INT;} }
 {CONST_FLOAT}     { if(verificarRangoFloat(yytext) == 0){ printf("CONST_FLOAT: %s\n", yytext); 
-agregarTablaSimbolos(yytext, 0); } }
+agregarTablaSimbolos(yytext, 0); return CONST_FLOAT;} }
 {CONST_STRING}    { if(verificarLongString(yytext) == 0){ printf("CONST_STRING: %s\n", yytext);
-agregarTablaSimbolos(yytext, 0); } }  
+agregarTablaSimbolos(yytext, 0); return CONST_STRING;} }  
 
-{OP_ASIG}         { printf("OP_ASIG: %s\n", yytext); }
-{EQ}              { printf("EQ: %s\n", yytext); }
+{OP_ASIG}         { printf("OP_ASIG: %s\n", yytext); return OP_ASIG;}
+{EQ}              { printf("EQ: %s\n", yytext); return EQ;}
 
-{OP_SUMA}         { printf("OP_SUMA: %s\n", yytext); }
-{OP_RESTA}        { printf("OP_RESTA: %s\n", yytext); }
-{OP_PRODUCTO}     { printf("OP_PRODUCTO: %s\n", yytext); }
-{OP_COCIENTE}     { printf("OP_COCIENTE: %s\n", yytext); }
+{OP_SUMA}         { printf("OP_SUMA: %s\n", yytext); return OP_SUMA;}
+{OP_RESTA}        { printf("OP_RESTA: %s\n", yytext); return OP_RESTA;}
+{OP_PRODUCTO}     { printf("OP_PRODUCTO: %s\n", yytext); return OP_PRODUCTO;}
+{OP_COCIENTE}     { printf("OP_COCIENTE: %s\n", yytext); return OP_COCIENTE;}
 
-{OP_MAYOR}        { printf("OP_MAYOR: %s\n", yytext); }
-{OP_MAYOR_IGUAL}  { printf("OP_MAYOR_IGUAL: %s\n", yytext); }
-{OP_MENOR}        { printf("OP_MENOR: %s\n", yytext); }
-{OP_MENOR_IGUAL}  { printf("OP_MENOR_IGUAL: %s\n", yytext); }
-{OP_IGUAL}        { printf("OP_IGUAL: %s\n", yytext); }
-{OP_DISTINTO}     { printf("OP_DISTINTO: %s\n", yytext); }
+{OP_MAYOR}        { printf("OP_MAYOR: %s\n", yytext); return OP_MAYOR;}
+{OP_MAYOR_IGUAL}  { printf("OP_MAYOR_IGUAL: %s\n", yytext); return OP_MAYOR_IGUAL;}
+{OP_MENOR}        { printf("OP_MENOR: %s\n", yytext); return OP_MENOR;}
+{OP_MENOR_IGUAL}  { printf("OP_MENOR_IGUAL: %s\n", yytext); return OP_MENOR_IGUAL;}
+{OP_IGUAL}        { printf("OP_IGUAL: %s\n", yytext); return OP_IGUAL;}
+{OP_DISTINTO}     { printf("OP_DISTINTO: %s\n", yytext); return OP_DISTINTO;}
 
-{PAR_AP}          { printf("PAR_AP: %s\n", yytext); }
-{PAR_CL}          { printf("PAR_CL: %s\n", yytext); }
-{COR_AP}          { printf("COR_AP: %s\n", yytext); }
-{COR_CL}          { printf("COR_CL: %s\n", yytext); }
-{LLA_AP}          { printf("LLA_AP: %s\n", yytext); }
-{LLA_CL}          { printf("LLA_CL: %s\n", yytext); }
+{PAR_AP}          { printf("PAR_AP: %s\n", yytext); return PAR_AP;}
+{PAR_CL}          { printf("PAR_CL: %s\n", yytext); return PAR_CL;}
+{COR_AP}          { printf("COR_AP: %s\n", yytext); return COR_AP;}
+{COR_CL}          { printf("COR_CL: %s\n", yytext); return COR_CL;}
+{LLA_AP}          { printf("LLA_AP: %s\n", yytext); return LLA_AP;}
+{LLA_CL}          { printf("LLA_CL: %s\n", yytext); return LLA_CL;}
 
-{COMA}            { printf("COMA: %s\n", yytext); }
-{PUNTO_Y_COMA}    { printf("PUNTO_Y_COMA: %s\n", yytext); }
-{DOS_PUNTOS}      { printf("DOS_PUNTOS: %s\n", yytext); }
-{DOBLE_DOS_PUNTOS} { printf("DOBLE_DOS_PUNTOS: %s\n", yytext); }
+{COMA}            { printf("COMA: %s\n", yytext); return COMA;}
+{PUNTO_Y_COMA}    { printf("PUNTO_Y_COMA: %s\n", yytext); return PUNTO_Y_COMA;}
+{DOS_PUNTOS}      { printf("DOS_PUNTOS: %s\n", yytext); return DOS_PUNTOS;}
+{DOBLE_DOS_PUNTOS} { printf("DOBLE_DOS_PUNTOS: %s\n", yytext); return DOBLE_DOS_PUNTOS;}
 
 {COMENTARIO}
 " "             		
@@ -186,9 +187,10 @@ agregarTablaSimbolos(yytext, 0); } }
 "\t"
 "\n\t"
 "\r\n"
-.                 printf("ERROR LEXICO en %d - Caracter no reconocido: %s\n", yylineno, yytext);
+.                 { printf("\nERROR LEXICO: Caracter no reconocido: %s\n", yytext); yyerror(); }
 
 %%
+
 /*
 int main (int argc, char* argv[])
 {
@@ -253,7 +255,7 @@ int abrirArchivo(FILE** pf, char* nombreArchivo, char* modo)
 
     if (*pf == NULL) {
         printf("No se pudo abrir el archivo %s\n");
-        return yyerror();
+        exit(1);
     }
 
     return 0;
@@ -291,7 +293,7 @@ int verificarLongId(char* tk)
     if(strlen(tk) <= MAX_LONG_ID)
         return 0;
     
-    printf("ERROR LEXICO en %d - Longitud de identificador muy grande: %s\n", yylineno, yytext);
+    printf("\nERROR LEXICO: Longitud de identificador muy grande: %s\n", yytext);
 
     return yyerror();;
 }
@@ -303,7 +305,7 @@ int verificarLongString(char* tk)
     if(strlen(tk) <= MAX_LONG_STR)
         return 0;
 
-    printf("ERROR LEXICO en %d - Longitud de string muy grande: %s\n", yylineno, yytext);
+    printf("\nERROR LEXICO: Longitud de string muy grande: %s\n", yytext);
 
     return yyerror();
 }
@@ -317,7 +319,7 @@ int verificarRangoInt(char* tk)
     if(valor >= MIN_VALOR_INT && valor <= MAX_VALOR_INT)
         return 0;
 
-    printf("ERROR LEXICO en %d - Entero fuera de rango: %s\n", yylineno, yytext);
+    printf("\nERROR LEXICO: Entero fuera de rango: %s\n", yytext);
     
     return yyerror();
 }
@@ -331,7 +333,7 @@ int verificarRangoFloat(char* tk)
     if(valor >= MIN_VALOR_FLOAT && valor <= MAX_VALOR_FLOAT)
         return 0;
 
-    printf("ERROR LEXICO en %d - Entero fuera de rango: %s\n", yylineno, yytext);
+    printf("\nERROR LEXICO: Entero fuera de rango: %s\n", yytext);
     
     return yyerror();
 }
@@ -339,6 +341,6 @@ int verificarRangoFloat(char* tk)
 
 int yyerror(void)
 {
-    printf("\nError lexico: Caracter invalido: %s, saliendo...\n", yytext);
+    printf("LINEA: %d\n", yylineno);
     exit(1);
 }

@@ -51,6 +51,16 @@ FILE  *yyin;
 %token COR_CL
 %token SUMFIRSTPRIMES
 %token EQ
+%token ASIGCOMP
+%token CONT
+%token SET
+%token SWITCH
+%token CASE
+%token ELSECASE
+%token ENDSETCASE
+%token FIB
+%token PUNTO_Y_COMA
+%token DOBLE_DOS_PUNTOS
 
 %%
 

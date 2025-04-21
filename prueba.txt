@@ -11,4 +11,4 @@ b := "@sdADaSjfla%dfg"
 
 read(base)
 reorder([x+3, 1+1, 9-x],1,2)
-x = sumFirstPrimes(5)
+x := sumFirstPrimes(5)
