@@ -4,7 +4,7 @@
 #include <string.h>
 #include "y.tab.h"
 
-FILE *yyin;
+
 char *yytext;
 
 /*CONSTANTES*/
@@ -254,7 +254,7 @@ int abrirArchivo(FILE** pf, char* nombreArchivo, char* modo)
     *pf = fopen(nombreArchivo, modo);
 
     if (*pf == NULL) {
-        printf("No se pudo abrir el archivo %s\n");
+        printf("No se pudo abrir el archivo %s\n",nombreArchivo);
         exit(1);
     }
 

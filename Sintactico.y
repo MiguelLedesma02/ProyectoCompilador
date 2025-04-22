@@ -5,10 +5,9 @@
 #include <stdlib.h>
 #include "y.tab.h"
 int yystopparser=0;
-FILE  *yyin;
-
-  int yyerror();
-  int yylex();
+extern FILE *yyin;
+int yyerror();
+int yylex();
 
 
 %}
