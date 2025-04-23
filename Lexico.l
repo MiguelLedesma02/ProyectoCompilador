@@ -70,12 +70,12 @@ REORDER           "reorder"
 SUMFIRSTPRIMES    "sumFirstPrimes"
 ASIGCOMP          "AsigComp"
 CONT              "!cont"
-SET               "set" 
-SWITCH            "switch"
-CASE              "case"
-ELSECASE          "elsecase"
-ENDSETCASE        "endsetcase"
-FIB               "fib"          
+SET               "SET" 
+SWITCH            "SWITCH"
+CASE              "CASE"
+ELSECASE          "ELSECASE"
+ENDSETCASE        "ENDSETCASE"
+FIB               "FIB"          
 
 /*Tokens básicos*/
 

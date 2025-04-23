@@ -115,6 +115,10 @@ sentencia:
 	|write{printf("write es sentencia\n");}
 	|reorder{printf("reorder es sentencia\n");}
 	|sumfirstprimes {printf("sumfirstprimes es sentencia\n");}
+	|asigcomp {printf("asignacion compleja es sentencia\n");}
+	|fibonacci {printf("fibonacci es sentencia\n");}
+	|contardistinto {printf("contar distinto es sentencia\n");}
+	|setswitch {printf("setswitch es sentencia\n");}
 	;
 	
 asignacion: 
@@ -190,6 +194,71 @@ factor:
 	| PAR_AP expresion PAR_CL {printf("    Expresion entre parentesis es Factor\n");}
 	| OP_RESTA factor { printf("-Factor es Factor\n"); }
      	;
+
+asigcomp:
+	ASIGCOMP PAR_AP COR_AP asignacion_comp COR_CL PAR_CL {
+		printf("ASIGCOMP PAR_AP COR_AP asignacion_comp COR_CL PAR_CL es asigcomp\n");
+	}
+	;
+
+asignacion_comp:
+	ID COR_CL DOS_PUNTOS COR_AP valor_asig {
+		printf("ID COR_CL DOS_PUNTOS COR_AP valor_asig es asignacion_comp\n");
+	}
+	|ID COMA asignacion_comp COMA valor_asig {
+		printf("ID COMA asignacion_comp COMA valor_asig es asignacion_comp\n");
+	}
+	;
+
+valor_asig:
+	CONST_INT { printf("CONST_INT es valor_asig\n"); }
+	|ID { printf("ID es valor_asig\n"); }
+	|CONST_FLOAT { printf("CONST_FLOAT es valor_asig\n"); }
+	|CONST_STRING { printf("CONST_STRING es valor_asig\n"); }
+	;
+
+fibonacci:
+	FIB PAR_AP CONST_INT PAR_CL {
+		printf("FIB PAR_AP CONST_INT PAR_CL es fibonacci\n");
+	}
+	|FIB PAR_AP ID PAR_CL {
+		printf("FIB PAR_AP ID PAR_CL es fibonacci\n");
+	}
+	;
+
+contardistinto:
+	ID OP_ASIG CONT PAR_AP expresion DOBLE_DOS_PUNTOS COR_AP lista_contar COR_CL PAR_CL {
+		printf("ID OP_ASIG CONT PAR_AP expresion DOBLE_DOS_PUNTOS COR_AP lista_contar COR_CL PAR_CL es contardistinto\n");
+	}
+	;
+
+lista_contar:
+	ID { printf("ID es lista_contar\n"); }
+	|CONST_INT { printf("CONST_INT es lista_contar\n"); }
+	|lista_contar COMA ID { printf("lista_contar COMA ID es lista_contar\n"); }
+	|lista_contar COMA CONST_INT { printf("lista_contar COMA CONST_INT es lista_contar\n"); }
+	;
+
+setswitch:
+	SET SWITCH PAR_AP expresion PAR_CL cases elsecase ENDSETCASE {
+		printf("SET SWITCH PAR_AP expresion PAR_CL cases elsecase ENDSETCASE es setswitch\n");
+	}
+	;
+
+cases:
+	cases CASE CONST_INT DOS_PUNTOS bloque {
+		printf("cases CASE CONST_INT DOS_PUNTOS bloque es cases\n");
+	}
+	|CASE CONST_INT DOS_PUNTOS bloque {
+		printf("CASE CONST_INT DOS_PUNTOS bloque es cases\n");
+	}
+	;
+
+elsecase:
+	ELSECASE DOS_PUNTOS bloque {
+		printf("ELSECASE DOS_PUNTOS bloque es elsecase\n");
+	}
+	;
 %%
 
 
