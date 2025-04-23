@@ -136,6 +136,7 @@ read:
 
 write:
 	WRITE PAR_AP ID PAR_CL{printf("WRITE PAR_AP ID PAR_CL es write\n");}
+	| WRITE PAR_AP CONST_STRING PAR_CL{printf("WRITE PAR_AP CONST_STRING PAR_CL es write\n");}
 	;
 	
 reorder:
@@ -187,6 +188,7 @@ factor:
 	  | CONST_FLOAT {printf("CONST_FLOAT es Factor\n");}
 	  | CONST_STRING {printf("CONST_STRING es Factor\n");}
 	| PAR_AP expresion PAR_CL {printf("    Expresion entre parentesis es Factor\n");}
+	| OP_RESTA factor { printf("-Factor es Factor\n"); }
      	;
 %%
 

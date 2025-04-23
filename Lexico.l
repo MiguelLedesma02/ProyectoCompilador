@@ -80,8 +80,8 @@ FIB               "fib"
 /*Tokens básicos*/
 
 ID     {LETRA}({LETRA}|{DIGITO}|"_")*
-CONST_INT         "-"?{DIGITO}+
-CONST_FLOAT       "-"?{DIGITO}+"."{DIGITO}+([eE][-+]?{DIGITO}+)?
+CONST_INT         {DIGITO}+
+CONST_FLOAT       (({DIGITO}+("."{DIGITO}*)?)|("."{DIGITO}+))([eE][-+]?{DIGITO}+)?
 CONST_STRING      \"[^\n"]*\"
 OP_ASIG           ":="
 COMENTARIO        "#+"([^\n]|\n)*"+#"
