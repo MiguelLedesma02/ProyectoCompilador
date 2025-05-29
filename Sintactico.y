@@ -201,76 +201,31 @@ write:
 	;
 	
 reorder:
-	REORDER PAR_AP COR_AP expresiones COR_CL COMA CONST_INT COMA CONST_INT PAR_CL {printf("REORDER PAR_AP COR_AP expresiones COR_CL COMA CONST_INT COMA CONST_INT PAR_CL es reorder\n");
-	strcpy(nombre, "_");
-        strcat(nombre, $7); // Valor booleano (0 o 1)
+    REORDER PAR_AP COR_AP expresiones COR_CL COMA CONST_INT COMA CONST_INT PAR_CL {
+        printf("REORDER PAR_AP COR_AP expresiones COR_CL COMA CONST_INT COMA CONST_INT PAR_CL es reorder\n");
+        // Primer CONST_INT
+        strcpy(nombre, "_");
+        strcat(nombre, $7); // Captura el primer índice
         insertarEnOrden(&listaSimbolos, nombre, "", $7, 0);
-        sprintf(auxIndC, "[%d]", auxInd);
-        auxInd = crearTerceto(nombre, "", ""); // Terceto para el booleano
-
-        /* Guardar el pivote (CONST_INT en $9) */
-        strcpy(nombre, "_");
-        strcat(nombre, $9); // Pivote
-        insertarEnOrden(&listaSimbolos, nombre, "", $9, 0);
         sprintf(pivotIndC, "[%d]", pivotInd);
-        pivotInd = crearTerceto(nombre, "", ""); // Terceto para el pivote
-
-        /* Validar que el pivote no exceda la cantidad de expresiones */
-        int cantExp = 0; // Contador de expresiones (debe calcularse según la pila)
-        t_pila auxPila;
-        crear_pila(&auxPila);
-        while (!pila_vacia(&pilaInit)) {
-            char temp[50];
-            desapilar(&pilaInit, temp);
-            apilar(&auxPila, temp); // Guardar en pila auxiliar
-            cantExp++;
-        }
-        // Restaurar pila original
-        while (!pila_vacia(&auxPila)) {
-            char temp[50];
-            desapilar(&auxPila, temp);
-            apilar(&pilaInit, temp);
-        }
-        vaciar_pila(&auxPila);
-
-        /* Crear terceto para comparar pivote con cantidad de expresiones */
-        sprintf(auxIndC, "[%d]", auxInd); // Booleano
-        sprintf(pivotIndC, "[%d]", pivotInd); // Pivote
+        pivotInd = crearTerceto(nombre, "", "");
+        
+        // Segundo CONST_INT
         strcpy(nombre, "_");
-        sprintf(nombre + strlen(nombre), "%d", cantExp);
-        insertarEnOrden(&listaSimbolos, nombre, "", nombre, 0);
-        int cantExpInd = crearTerceto(nombre, "", "");
-        sprintf(TindC, "[%d]", cantExpInd);
-        crearTerceto("CMP", pivotIndC, TindC);
-        strcpy(etiquetaCond, "BGT");
-        condInd = crearTerceto(etiquetaCond, "", ""); // Salto si pivote > cantExp
-        apilarTercetos(condInd);
-
-        /* Generar terceto para la operación REORDER */
-        crearTerceto("REORDER", auxIndC, pivotIndC); // Booleano y pivote como parámetros
-
-        /* Visualizar la lista reordenada */
-        char listaStr[200] = "[";
-        int first = 1;
-        while (!pila_vacia(&pilaInit)) {
-            char temp[50];
-            desapilar(&pilaInit, temp);
-            if (!first) strcat(listaStr, ",");
-            strcat(listaStr, temp); // Asumiendo que temp contiene el nombre o índice
-            first = 0;
-        }
-        strcat(listaStr, "]");
-        strcpy(nombre, "_");
-        strcat(nombre, eliminarComillas(listaStr));
-        insertarEnOrden(&listaSimbolos, nombre, "", listaStr, strlen(eliminarComillas(listaStr)));
-        crearTerceto("WRITE", nombre, ""); // Mostrar lista reordenada
-
-        /* Completar salto condicional si el pivote es inválido */
-        if ((condInd = desapilarTercetos()) != -1) {
-            modificarTerceto_saltoCondicional(condInd);
-        }
-	}
-	;
+        strcat(nombre, $9); // Captura el segundo índice
+        insertarEnOrden(&listaSimbolos, nombre, "", $9, 0);
+        sprintf(auxIndC, "[%d]", auxInd);
+        auxInd = crearTerceto(nombre, "", "");
+        
+        // Terceto REORDER con el arreglo y los índices
+        sprintf(EindC, "[%d]", Eind); // Índice de la última expresión (representa el arreglo)
+        //crearTerceto("REORDER", EindC, pivotIndC, auxIndC);
+        
+        // Terceto WRITE para el arreglo reordenado (asumiendo que es parte del comportamiento)
+        sprintf(AindC, "_[%d]", Eind); // Representa el arreglo completo
+        crearTerceto("WRITE", AindC, "");
+    }
+    ;
 
 sumfirstprimes:
 	ID EQ SUMFIRSTPRIMES PAR_AP CONST_INT PAR_CL {printf("ID OP_ASIG SUMFIRSTPRIMES PAR_AP CONST_INT PAR_CL es sumfirstprimes\n");}
@@ -291,20 +246,144 @@ expresiones:
 	
 condiciones:
     condicion {printf("condicion es condiciones\n");}
-	|NOT condicion {printf("NOT condicion es condiciones\n");}
-    |condiciones AND condicion{printf("condiciones AND condicion es condiciones\n");}
-	|condiciones OR condicion{printf("condiciones OR condicion es condiciones\n");}
-	|condiciones AND NOT condicion{printf("condiciones AND NOT condicion es condiciones\n");}
-	|condiciones OR NOT condicion{printf("condiciones OR NOT condicion es condiciones\n");}
+	|NOT condicion {printf("NOT condicion es condiciones\n");
+			if (condInd != -1) {
+            // Invertir el salto condicional (e.g., BLE -> BGT)
+            char* saltoOriginal = etiquetaCond;
+            if (strcmp(saltoOriginal, "BLE") == 0) strcpy(etiquetaCond, "BGT");
+            else if (strcmp(saltoOriginal, "BGT") == 0) strcpy(etiquetaCond, "BLE");
+            else if (strcmp(saltoOriginal, "BLT") == 0) strcpy(etiquetaCond, "BGE");
+            else if (strcmp(saltoOriginal, "BGE") == 0) strcpy(etiquetaCond, "BLT");
+            else if (strcmp(saltoOriginal, "BNE") == 0) strcpy(etiquetaCond, "BEQ");
+            else if (strcmp(saltoOriginal, "BEQ") == 0) strcpy(etiquetaCond, "BNE");
+            // Reemplazar el terceto de salto con el inverso
+            strcpy(tercetos[condInd].operador, etiquetaCond);
+            apilarTercetos(condInd); // Reapilar el terceto modificado
+        }
+		}
+    |condiciones AND condicion{printf("condiciones AND condicion es condiciones\n");
+	int tempInd = desapilarTercetos();
+        int cond2Ind = condInd; // Salto de la segunda condición
+        // Crear un salto incondicional para el caso en que la primera condición sea falsa
+        condMultInd = crearTerceto("BI", "", "");
+        // Modificar el salto de la primera condición para que apunte a la segunda
+        modificarTerceto_saltoCondicional(tempInd);
+        // Apilar el salto de la segunda condición
+        apilarTercetos(cond2Ind);
+        condMult = true; // Indicar condición múltiple
+		}
+	|condiciones OR condicion{printf("condiciones OR condicion es condiciones\n");
+	int tempInd = desapilarTercetos();
+        int cond2Ind = condInd; // Salto de la segunda condición
+        // Modificar el salto de la primera condición (inverso para OR)
+        modificarTerceto_etiquetaCond(tercetos[tempInd].operador, tempInd);
+        modificarTerceto_saltoCondicional(tempInd);
+        // Apilar el salto de la segunda condición
+        apilarTercetos(cond2Ind);
+        condMult = true; // Indicar condición múltiple
+	}
+	|condiciones AND NOT condicion{printf("condiciones AND NOT condicion es condiciones\n");
+		if (condInd != -1) {
+            // Invertir el salto de la segunda condición
+            char* saltoOriginal = etiquetaCond;
+            if (strcmp(saltoOriginal, "BLE") == 0) strcpy(etiquetaCond, "BGT");
+            else if (strcmp(saltoOriginal, "BGT") == 0) strcpy(etiquetaCond, "BLE");
+            else if (strcmp(saltoOriginal, "BLT") == 0) strcpy(etiquetaCond, "BGE");
+            else if (strcmp(saltoOriginal, "BGE") == 0) strcpy(etiquetaCond, "BLT");
+            else if (strcmp(saltoOriginal, "BNE") == 0) strcpy(etiquetaCond, "BEQ");
+            else if (strcmp(saltoOriginal, "BEQ") == 0) strcpy(etiquetaCond, "BNE");
+            strcpy(tercetos[condInd].operador, etiquetaCond);
+        }
+        // Desapilar el terceto de salto de la primera condición
+        int tempInd = desapilarTercetos();
+        int cond2Ind = condInd; // Salto de la segunda condición (invertido)
+        // Crear un salto incondicional para el caso en que la primera condición sea falsa
+        condMultInd = crearTerceto("BI", "", "");
+        // Modificar el salto de la primera condición para que apunte a la segunda
+        modificarTerceto_saltoCondicional(tempInd);
+        // Apilar el salto de la segunda condición
+        apilarTercetos(cond2Ind);
+        condMult = true; // Indicar condición múltiple
+	}
+	|condiciones OR NOT condicion{printf("condiciones OR NOT condicion es condiciones\n");
+		if (condInd != -1) {
+            // Invertir el salto de la segunda condición
+            char* saltoOriginal = etiquetaCond;
+            if (strcmp(saltoOriginal, "BLE") == 0) strcpy(etiquetaCond, "BGT");
+            else if (strcmp(saltoOriginal, "BGT") == 0) strcpy(etiquetaCond, "BLE");
+            else if (strcmp(saltoOriginal, "BLT") == 0) strcpy(etiquetaCond, "BGE");
+            else if (strcmp(saltoOriginal, "BGE") == 0) strcpy(etiquetaCond, "BLT");
+            else if (strcmp(saltoOriginal, "BNE") == 0) strcpy(etiquetaCond, "BEQ");
+            else if (strcmp(saltoOriginal, "BEQ") == 0) strcpy(etiquetaCond, "BNE");
+            strcpy(tercetos[condInd].operador, etiquetaCond);
+        }
+        // Desapilar el terceto de salto de la primera condición
+        int tempInd = desapilarTercetos();
+        int cond2Ind = condInd; // Salto de la segunda condición (invertido)
+        // Modificar el salto de la primera condición (inverso para OR)
+        modificarTerceto_etiquetaCond(tercetos[tempInd].operador, tempInd);
+        modificarTerceto_saltoCondicional(tempInd);
+        // Apilar el salto de la segunda condición
+        apilarTercetos(cond2Ind);
+        condMult = true; // Indicar condición múltiple
+	}
 	;
 
 condicion:
-	 expresion OP_MAYOR  expresion {sprintf(condIzqIndC, "[%d]", condIzqInd); if(apilarInd == true){apilar(&pilaInit, condIzqIndC);}; sprintf(EindC, "[%d]", Eind); crearTerceto("CMP", condIzqIndC, EindC); strcpy(etiquetaCond, "BLE"); condInd = crearTerceto(etiquetaCond, "", ""); apilarTercetos(condInd);}
-	| expresion OP_MAYOR_IGUAL expresion {sprintf(condIzqIndC, "[%d]", condIzqInd); if(apilarInd == true){apilar(&pilaInit, condIzqIndC);}; sprintf(EindC, "[%d]", Eind); crearTerceto("CMP", condIzqIndC, EindC); strcpy(etiquetaCond, "BLT"); condInd = crearTerceto(etiquetaCond, "", ""); apilarTercetos(condInd);}
-	| expresion OP_MENOR  expresion {sprintf(condIzqIndC, "[%d]", condIzqInd); if(apilarInd == true){apilar(&pilaInit, condIzqIndC);}; sprintf(EindC, "[%d]", Eind); crearTerceto("CMP", condIzqIndC, EindC); strcpy(etiquetaCond, "BGE"); condInd = crearTerceto(etiquetaCond, "", ""); apilarTercetos(condInd);}
-	| expresion OP_MENOR_IGUAL expresion {sprintf(condIzqIndC, "[%d]", condIzqInd); if(apilarInd == true){apilar(&pilaInit, condIzqIndC);}; sprintf(EindC, "[%d]", Eind); crearTerceto("CMP", condIzqIndC, EindC); strcpy(etiquetaCond, "BGT"); condInd = crearTerceto(etiquetaCond, "", ""); apilarTercetos(condInd);}
-	| expresion OP_IGUAL expresion {sprintf(condIzqIndC, "[%d]", condIzqInd); if(apilarInd == true){apilar(&pilaInit, condIzqIndC);}; sprintf(EindC, "[%d]", Eind); crearTerceto("CMP", condIzqIndC, EindC); strcpy(etiquetaCond, "BNE"); condInd = crearTerceto(etiquetaCond, "", ""); apilarTercetos(condInd);}
-	| expresion OP_DISTINTO expresion {sprintf(condIzqIndC, "[%d]", condIzqInd); if(apilarInd == true){apilar(&pilaInit, condIzqIndC);}; sprintf(EindC, "[%d]", Eind); crearTerceto("CMP", condIzqIndC, EindC); strcpy(etiquetaCond, "BEQ"); condInd = crearTerceto(etiquetaCond, "", ""); apilarTercetos(condInd);}
+	 expresion {
+        condIzqInd = Eind; // Guardar el índice de la primera expresión
+    } OP_MAYOR  expresion {sprintf(condIzqIndC, "[%d]", condIzqInd);
+        if (apilarInd == true) { apilar(&pilaInit, condIzqIndC); }
+        sprintf(EindC, "[%d]", Eind);
+        crearTerceto("CMP", condIzqIndC, EindC);
+        strcpy(etiquetaCond, "BLE");
+        condInd = crearTerceto(etiquetaCond, "", "");
+        apilarTercetos(condInd);}
+	| expresion {
+        condIzqInd = Eind; // Guardar el índice de la primera expresión
+    } OP_MAYOR_IGUAL expresion {sprintf(condIzqIndC, "[%d]", condIzqInd);
+        if (apilarInd == true) { apilar(&pilaInit, condIzqIndC); }
+        sprintf(EindC, "[%d]", Eind);
+        crearTerceto("CMP", condIzqIndC, EindC);
+        strcpy(etiquetaCond, "BLT");
+        condInd = crearTerceto(etiquetaCond, "", "");
+        apilarTercetos(condInd);}
+	| expresion {
+        condIzqInd = Eind; // Guardar el índice de la primera expresión
+    } OP_MENOR  expresion {sprintf(condIzqIndC, "[%d]", condIzqInd);
+        if (apilarInd == true) { apilar(&pilaInit, condIzqIndC); }
+        sprintf(EindC, "[%d]", Eind);
+        crearTerceto("CMP", condIzqIndC, EindC);
+        strcpy(etiquetaCond, "BGE");
+        condInd = crearTerceto(etiquetaCond, "", "");
+        apilarTercetos(condInd);}
+	| expresion {
+        condIzqInd = Eind; // Guardar el índice de la primera expresión
+    } OP_MENOR_IGUAL expresion {sprintf(condIzqIndC, "[%d]", condIzqInd);
+        if (apilarInd == true) { apilar(&pilaInit, condIzqIndC); }
+        sprintf(EindC, "[%d]", Eind);
+        crearTerceto("CMP", condIzqIndC, EindC);
+        strcpy(etiquetaCond, "BGT");
+        condInd = crearTerceto(etiquetaCond, "", "");
+        apilarTercetos(condInd);}
+	| expresion {
+        condIzqInd = Eind; // Guardar el índice de la primera expresión
+    } OP_IGUAL expresion {sprintf(condIzqIndC, "[%d]", condIzqInd);
+        if (apilarInd == true) { apilar(&pilaInit, condIzqIndC); }
+        sprintf(EindC, "[%d]", Eind);
+        crearTerceto("CMP", condIzqIndC, EindC);
+        strcpy(etiquetaCond, "BNE");
+        condInd = crearTerceto(etiquetaCond, "", "");
+        apilarTercetos(condInd);}
+	| expresion {
+        condIzqInd = Eind; // Guardar el índice de la primera expresión
+    } OP_DISTINTO expresion {sprintf(condIzqIndC, "[%d]", condIzqInd);
+        if (apilarInd == true) { apilar(&pilaInit, condIzqIndC); }
+        sprintf(EindC, "[%d]", Eind);
+        crearTerceto("CMP", condIzqIndC, EindC);
+        strcpy(etiquetaCond, "BEQ");
+        condInd = crearTerceto(etiquetaCond, "", "");
+        apilarTercetos(condInd);}
 	;
 	
 expresion:

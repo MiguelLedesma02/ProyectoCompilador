@@ -1,9 +1,16 @@
 init {
-    a, b , c : int
+    a, b, c : int
     x : float
 }
 
-reorder([x+3, 1+1, 9-x],1,2)
-reorder([r * j - 2, x + 3, 1 + 1, 9 - x],0,2)
-reorder([r*j-2, x+3, 1+1, 9-x],0,3)
-reorder([r*j-2, x+3, 1+1, 9-x],1,0)
+if (a + 5 > b * 2) {
+    write("a + 5 es mayor que b * 2")
+}
+
+if (c - 3 <= 10) {
+    write("c - 3 es menor o igual a 10")
+}
+
+if (a + b == x) {
+    write("a + b es igual a x")
+}
