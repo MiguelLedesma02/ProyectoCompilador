@@ -201,7 +201,75 @@ write:
 	;
 	
 reorder:
-	REORDER PAR_AP COR_AP expresiones COR_CL COMA CONST_INT COMA CONST_INT PAR_CL {printf("REORDER PAR_AP COR_AP expresiones COR_CL COMA CONST_INT COMA CONST_INT PAR_CL es reorder\n");}
+	REORDER PAR_AP COR_AP expresiones COR_CL COMA CONST_INT COMA CONST_INT PAR_CL {printf("REORDER PAR_AP COR_AP expresiones COR_CL COMA CONST_INT COMA CONST_INT PAR_CL es reorder\n");
+	strcpy(nombre, "_");
+        strcat(nombre, $7); // Valor booleano (0 o 1)
+        insertarEnOrden(&listaSimbolos, nombre, "", $7, 0);
+        sprintf(auxIndC, "[%d]", auxInd);
+        auxInd = crearTerceto(nombre, "", ""); // Terceto para el booleano
+
+        /* Guardar el pivote (CONST_INT en $9) */
+        strcpy(nombre, "_");
+        strcat(nombre, $9); // Pivote
+        insertarEnOrden(&listaSimbolos, nombre, "", $9, 0);
+        sprintf(pivotIndC, "[%d]", pivotInd);
+        pivotInd = crearTerceto(nombre, "", ""); // Terceto para el pivote
+
+        /* Validar que el pivote no exceda la cantidad de expresiones */
+        int cantExp = 0; // Contador de expresiones (debe calcularse según la pila)
+        t_pila auxPila;
+        crear_pila(&auxPila);
+        while (!pila_vacia(&pilaInit)) {
+            char temp[50];
+            desapilar(&pilaInit, temp);
+            apilar(&auxPila, temp); // Guardar en pila auxiliar
+            cantExp++;
+        }
+        // Restaurar pila original
+        while (!pila_vacia(&auxPila)) {
+            char temp[50];
+            desapilar(&auxPila, temp);
+            apilar(&pilaInit, temp);
+        }
+        vaciar_pila(&auxPila);
+
+        /* Crear terceto para comparar pivote con cantidad de expresiones */
+        sprintf(auxIndC, "[%d]", auxInd); // Booleano
+        sprintf(pivotIndC, "[%d]", pivotInd); // Pivote
+        strcpy(nombre, "_");
+        sprintf(nombre + strlen(nombre), "%d", cantExp);
+        insertarEnOrden(&listaSimbolos, nombre, "", nombre, 0);
+        int cantExpInd = crearTerceto(nombre, "", "");
+        sprintf(TindC, "[%d]", cantExpInd);
+        crearTerceto("CMP", pivotIndC, TindC);
+        strcpy(etiquetaCond, "BGT");
+        condInd = crearTerceto(etiquetaCond, "", ""); // Salto si pivote > cantExp
+        apilarTercetos(condInd);
+
+        /* Generar terceto para la operación REORDER */
+        crearTerceto("REORDER", auxIndC, pivotIndC); // Booleano y pivote como parámetros
+
+        /* Visualizar la lista reordenada */
+        char listaStr[200] = "[";
+        int first = 1;
+        while (!pila_vacia(&pilaInit)) {
+            char temp[50];
+            desapilar(&pilaInit, temp);
+            if (!first) strcat(listaStr, ",");
+            strcat(listaStr, temp); // Asumiendo que temp contiene el nombre o índice
+            first = 0;
+        }
+        strcat(listaStr, "]");
+        strcpy(nombre, "_");
+        strcat(nombre, eliminarComillas(listaStr));
+        insertarEnOrden(&listaSimbolos, nombre, "", listaStr, strlen(eliminarComillas(listaStr)));
+        crearTerceto("WRITE", nombre, ""); // Mostrar lista reordenada
+
+        /* Completar salto condicional si el pivote es inválido */
+        if ((condInd = desapilarTercetos()) != -1) {
+            modificarTerceto_saltoCondicional(condInd);
+        }
+	}
 	;
 
 sumfirstprimes:
@@ -209,9 +277,17 @@ sumfirstprimes:
 	;
 	
 expresiones:
-	expresiones COMA expresion {printf("expresiones COMA expresion es expresiones\n");}
-	| expresion  {printf("expresion es expresiones\n");}
-	;
+    expresiones COMA expresion {
+        printf("expresiones COMA expresion es expresiones\n");
+        sprintf(EindC, "[%d]", Eind);
+        apilar(&pilaInit, EindC); // Apilar índice de la expresión
+    }
+    | expresion {
+        printf("expresion es expresiones\n");
+        sprintf(EindC, "[%d]", Eind);
+        apilar(&pilaInit, EindC); // Apilar índice de la expresión
+    }
+    ;
 	
 condiciones:
     condicion {printf("condicion es condiciones\n");}
