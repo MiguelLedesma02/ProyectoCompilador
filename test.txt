@@ -1,86 +1,64 @@
 init {
-    a, b , c : int
-    x : float
+    a: float
+    x, c, r, z, f: int
+    b: string
 }
-
-a := 1
-b := 3
-c := 2
-
-while (a > b)
-{
-    write("a es mas grande que b")
-
-    a := a + 1
-}
-
-if (a > b)
-{
-    write("a es mas grande que b")
-}
-else
-{
-    write("a es mas chico o igual a b")
-}
-
 
 a := 99999.99
-a := .9999
 a := 99.
+a := .9999
 
 b := "@sdADaSjfla%dfg"
 b := "asldk  fh sjf"
-
 
 x := 27 - c
 x := r + 500
 x := 34 * 3
 x := z / f
 
+if (c > x)
+{
+    write("c es mas grande que x")
+}
+else
+{
+    write("c es mas chico o igual a x")
+}
+
+c := 4
+x := 1
+
+while (c > x)
+{
+    write("c es mas grande que x")
+    x := x + 1
+}
 
 #+ Esto es un comentario +#
 
-read(base) #+ base es una variable +#
+read(x)
 
-write(“ewr”)  #+ “ewr” es una cte string +#
-write(var1)  #+ var1 es una variable numérica definida previamente +#
+write("ewr")
 
+x := 1
+r := 1
+c := 2
 
-if (a > b AND c > b)
+if (x > r AND c > x)
 {
-    write("a es mas grande que b y c es mas grande que b")
+    write("x es mas grande que b y c es mas grande que x")
 }
 
-if (a > b OR c > b)
+if (x > r OR c > x)
 {
-    write("a es mas grande que b o c es mas grande que b")
+    write("x es mas grande que r o c es mas grande que x")
 }
 
-if (NOT a > b)
+if (NOT x > r)
 {
-    write("a no es mas grande que b")
+    write("x no es mas grande que r")
 }
-
 
 reorder([x+3, 1+1, 9-x],1,2)
-reorder([r * j - 2, x + 3, 1 + 1, 9 - x],0,2)
-reorder([r*j-2, x+3, 1+1, 9-x],0,3)
-reorder([r*j-2, x+3, 1+1, 9-x],1,0)
 
 x = sumFirstPrimes(5)
-
-a := -2
-
-AsigComp([a, b, c, d] : [1, b, 2.5, z])
-
-c := !cont(a+b+3/c :: [a,b,c,2,3])
-
-SET SWITCH ( a + b * 21)
-    CASE 10: z := 200
-             a := 100
-    CASE 22: z := a + b
-    CASE 30: z := a
-    ELSECASE: a := 0
-ENDSETCASE
-
-FIB (n)

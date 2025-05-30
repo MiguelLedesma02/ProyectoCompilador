@@ -146,7 +146,9 @@ DOBLE_DOS_PUNTOS  "::"
 {ENDSETCASE}      { printf("ENDSETCASE: %s\n", yytext); return ENDSETCASE;}
 {FIB}             { printf("FIB: %s\n", yytext); return FIB;}
 
-{ID}   { if(verificarLongId(yytext) == 0){ printf("IDENTIFICADOR: %s\n", yytext);agregarTablaSimbolos(yytext, 1); return ID;} }
+{ID}   { if(verificarLongId(yytext) == 0){printf("IDENTIFICADOR: %s\n", yytext);agregarTablaSimbolos(yytext, 1);
+yylval.strVal = strdup(yytext); 
+ return ID;} }
 {CONST_INT}       { if(verificarRangoInt(yytext) == 0){ printf("CONST_INT: %s\n", yytext);
 agregarTablaSimbolos(yytext, 0); return CONST_INT;} }
 {CONST_FLOAT}     { if(verificarRangoFloat(yytext) == 0){ printf("CONST_FLOAT: %s\n", yytext); 

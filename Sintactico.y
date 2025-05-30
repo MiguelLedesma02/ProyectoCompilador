@@ -3,19 +3,77 @@
 %{
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <stdbool.h>
 #include "y.tab.h"
+#include "Lista.h"
+#include "Pila.h"
+#include "Tercetos.h"
+
 int yystopparser=0;
 extern FILE *yyin;
+extern char* yytext;
 int yyerror();
 int yylex();
+tLista listaSimbolos;
+t_pila pilaInit;
 
+bool apilarInd = false;
+bool pantalla = false;
+bool numEncontrado = false;
+bool condMult = false;
 
+char nombre[200];
+char valor[200];
+char tipo[200];
+char tipoLadoIzq[200];
+char tipoLadoDer[200];
+int longitud;
+
+int Eind;
+int Tind;
+int Find;
+int CADind;
+int Aind;
+int condInd;
+int condIzqInd;
+int BIind;
+int condMultInd;
+int pivotInd;
+int auxInd;
+int saltInd;
+int ifAnidadoInd;
+
+char EindC[50];
+char readWrite[50];
+char TindC[50];
+char FindC[50];
+char CADindC[50];
+char AindC[50];
+char WHind[50];
+char condIndC[50];
+char condIzqIndC[50];
+char condMultIndC[50];
+char etiquetaCond[50];
+char escribirT[50];
+char numeroABuscar[50];
+char pivotIndC[50];
+char auxIndC[50];
+char nombreVarIzq[32];
+
+bool esPrimo(int);
+void sumarPrimos(int);
 %}
 
-%token CONST_INT
-%token CONST_FLOAT
-%token CONST_STRING
-%token ID
+%union{
+    /* Aca dentro se definen los campos de la variable yylval */
+    char* strVal;
+}
+
+%token <strVal> CONST_INT
+%token <strVal> CONST_FLOAT
+%token <strVal> CONST_STRING
+%token <strVal> ID
 %token OP_ASIG
 %token OP_SUMA
 %token OP_PRODUCTO
@@ -60,6 +118,7 @@ int yylex();
 %token FIB
 %token PUNTO_Y_COMA
 %token DOBLE_DOS_PUNTOS
+
 
 %%
 
@@ -122,76 +181,243 @@ sentencia:
 	;
 	
 asignacion: 
-    ID OP_ASIG expresion {printf("    ID = Expresion es ASIGNACION\n");}
+    ID OP_ASIG expresion {sprintf(EindC, "[%d]", Eind); Aind = crearTerceto(":=", nombreVarIzq, EindC);}
 	;
 
 iteracion:
-	WHILE PAR_AP condiciones PAR_CL LLA_AP bloque LLA_CL {printf("WHILE PAR_AP condiciones PAR_CL LLA_AP bloque LLA_CL es una iteracion\n");}
+	WHILE {apilarInd = true;} PAR_AP condiciones PAR_CL LLA_AP bloque LLA_CL {desapilar(&pilaInit, WHind); crearTerceto("BI", WHind, ""); desapilarTercetos(); modificarTerceto_saltoCondicional(condInd); apilarInd = false;}
 	;
 
 seleccion:
-	IF PAR_AP condiciones PAR_CL LLA_AP bloque LLA_CL {printf("IF PA condiciones PC CA bloque CC es seleccion\n");}
-	|IF PAR_AP condiciones PAR_CL LLA_AP bloque LLA_CL ELSE LLA_AP bloque LLA_CL {printf("IF PA condiciones PC CA bloque CC ELSE CA bloque CC es seleccion\n");}
+	IF PAR_AP condiciones PAR_CL LLA_AP bloque LLA_CL {if((condInd = desapilarTercetos()) != -1){modificarTerceto_saltoCondicional(condInd);}; if(condMult == true){modificarTerceto_saltoCondicional(condMultInd); condMult = false;};}
+	|IF PAR_AP condiciones PAR_CL LLA_AP bloque LLA_CL {BIind = crearTerceto("BI", "", ""); if((condInd = desapilarTercetos()) != -1){modificarTerceto_saltoCondicional(condInd);};} ELSE LLA_AP bloque LLA_CL {modificarTerceto_saltoCondicional(BIind);}
 	;
 
 read:
-	READ PAR_AP ID PAR_CL{printf("READ PAR_AP ID PAR_CL es read\n");}
+	READ PAR_AP ID PAR_CL {printf("READ PAR_AP ID PAR_CL es read\n");crearTerceto("READ", $3, "");}
 	;
 
 write:
-	WRITE PAR_AP ID PAR_CL{printf("WRITE PAR_AP ID PAR_CL es write\n");}
-	| WRITE PAR_AP CONST_STRING PAR_CL{printf("WRITE PAR_AP CONST_STRING PAR_CL es write\n");}
+	WRITE PAR_AP ID PAR_CL {crearTerceto("WRITE", $3, "");}
+	| WRITE PAR_AP CONST_STRING {strcpy(valor, yytext); strcpy(nombre, "_");
+								strcat(nombre, eliminarComillas(valor)); insertarEnOrden(&listaSimbolos,nombre,"",valor,strlen(eliminarComillas(valor)) ? strlen(eliminarComillas(valor)) : 0); crearTerceto("WRITE", valor, "");} PAR_CL
 	;
 	
 reorder:
-	REORDER PAR_AP COR_AP expresiones COR_CL COMA CONST_INT COMA CONST_INT PAR_CL {printf("REORDER PAR_AP COR_AP expresiones COR_CL COMA CONST_INT COMA CONST_INT PAR_CL es reorder\n");}
-	;
+    REORDER PAR_AP COR_AP expresiones COR_CL COMA CONST_INT COMA CONST_INT PAR_CL {
+        printf("REORDER PAR_AP COR_AP expresiones COR_CL COMA CONST_INT COMA CONST_INT PAR_CL es reorder\n");
+        // Primer CONST_INT
+        strcpy(nombre, "_");
+        strcat(nombre, $7); // Captura el primer índice
+        insertarEnOrden(&listaSimbolos, nombre, "", $7, 0);
+        sprintf(pivotIndC, "[%d]", pivotInd);
+        pivotInd = crearTerceto(nombre, "", "");
+        
+        // Segundo CONST_INT
+        strcpy(nombre, "_");
+        strcat(nombre, $9); // Captura el segundo índice
+        insertarEnOrden(&listaSimbolos, nombre, "", $9, 0);
+        sprintf(auxIndC, "[%d]", auxInd);
+        auxInd = crearTerceto(nombre, "", "");
+        
+        // Terceto REORDER con el arreglo y los índices
+        sprintf(EindC, "[%d]", Eind); // Índice de la última expresión (representa el arreglo)
+        //crearTerceto("REORDER", EindC, pivotIndC, auxIndC);
+        
+        // Terceto WRITE para el arreglo reordenado (asumiendo que es parte del comportamiento)
+        sprintf(AindC, "_[%d]", Eind); // Representa el arreglo completo
+        crearTerceto("WRITE", AindC, "");
+    }
+    ;
 
 sumfirstprimes:
-	ID EQ SUMFIRSTPRIMES PAR_AP CONST_INT PAR_CL {printf("ID OP_ASIG SUMFIRSTPRIMES PAR_AP CONST_INT PAR_CL es sumfirstprimes\n");}
+	ID EQ SUMFIRSTPRIMES PAR_AP CONST_INT
+	{strcpy(numeroABuscar, yytext); crearTerceto(":=", "@N", numeroABuscar);}
+	{
+		int valorEntero = atoi(numeroABuscar);
+		sumarPrimos(valorEntero);
+		
+	}
+	PAR_CL {printf("ID OP_ASIG SUMFIRSTPRIMES PAR_AP CONST_INT PAR_CL es sumfirstprimes\n");}
 	;
 	
 expresiones:
-	expresiones COMA expresion {printf("expresiones COMA expresion es expresiones\n");}
-	| expresion  {printf("expresion es expresiones\n");}
-	;
+    expresiones COMA expresion {
+        printf("expresiones COMA expresion es expresiones\n");
+        sprintf(EindC, "[%d]", Eind);
+        apilar(&pilaInit, EindC); // Apilar índice de la expresión
+    }
+    | expresion {
+        printf("expresion es expresiones\n");
+        sprintf(EindC, "[%d]", Eind);
+        apilar(&pilaInit, EindC); // Apilar índice de la expresión
+    }
+    ;
 	
 condiciones:
     condicion {printf("condicion es condiciones\n");}
-	|NOT condicion {printf("NOT condicion es condiciones\n");}
-    |condiciones AND condicion{printf("condiciones AND condicion es condiciones\n");}
-	|condiciones OR condicion{printf("condiciones OR condicion es condiciones\n");}
-	|condiciones AND NOT condicion{printf("condiciones AND NOT condicion es condiciones\n");}
-	|condiciones OR NOT condicion{printf("condiciones OR NOT condicion es condiciones\n");}
+	|NOT condicion {printf("NOT condicion es condiciones\n");
+			if (condInd != -1) {
+            // Invertir el salto condicional (e.g., BLE -> BGT)
+            char* saltoOriginal = etiquetaCond;
+            if (strcmp(saltoOriginal, "BLE") == 0) strcpy(etiquetaCond, "BGT");
+            else if (strcmp(saltoOriginal, "BGT") == 0) strcpy(etiquetaCond, "BLE");
+            else if (strcmp(saltoOriginal, "BLT") == 0) strcpy(etiquetaCond, "BGE");
+            else if (strcmp(saltoOriginal, "BGE") == 0) strcpy(etiquetaCond, "BLT");
+            else if (strcmp(saltoOriginal, "BNE") == 0) strcpy(etiquetaCond, "BEQ");
+            else if (strcmp(saltoOriginal, "BEQ") == 0) strcpy(etiquetaCond, "BNE");
+            // Reemplazar el terceto de salto con el inverso
+            strcpy(tercetos[condInd].operador, etiquetaCond);
+            apilarTercetos(condInd); // Reapilar el terceto modificado
+        }
+		}
+    |condiciones AND condicion{printf("condiciones AND condicion es condiciones\n");
+	int tempInd = desapilarTercetos();
+        int cond2Ind = condInd; // Salto de la segunda condición
+        // Crear un salto incondicional para el caso en que la primera condición sea falsa
+        condMultInd = crearTerceto("BI", "", "");
+        // Modificar el salto de la primera condición para que apunte a la segunda
+        modificarTerceto_saltoCondicional(tempInd);
+        // Apilar el salto de la segunda condición
+        apilarTercetos(cond2Ind);
+        condMult = true; // Indicar condición múltiple
+		}
+	|condiciones OR condicion{printf("condiciones OR condicion es condiciones\n");
+	int tempInd = desapilarTercetos();
+        int cond2Ind = condInd; // Salto de la segunda condición
+        // Modificar el salto de la primera condición (inverso para OR)
+        modificarTerceto_etiquetaCond(tercetos[tempInd].operador, tempInd);
+        modificarTerceto_saltoCondicional(tempInd);
+        // Apilar el salto de la segunda condición
+        apilarTercetos(cond2Ind);
+        condMult = true; // Indicar condición múltiple
+	}
+	|condiciones AND NOT condicion{printf("condiciones AND NOT condicion es condiciones\n");
+		if (condInd != -1) {
+            // Invertir el salto de la segunda condición
+            char* saltoOriginal = etiquetaCond;
+            if (strcmp(saltoOriginal, "BLE") == 0) strcpy(etiquetaCond, "BGT");
+            else if (strcmp(saltoOriginal, "BGT") == 0) strcpy(etiquetaCond, "BLE");
+            else if (strcmp(saltoOriginal, "BLT") == 0) strcpy(etiquetaCond, "BGE");
+            else if (strcmp(saltoOriginal, "BGE") == 0) strcpy(etiquetaCond, "BLT");
+            else if (strcmp(saltoOriginal, "BNE") == 0) strcpy(etiquetaCond, "BEQ");
+            else if (strcmp(saltoOriginal, "BEQ") == 0) strcpy(etiquetaCond, "BNE");
+            strcpy(tercetos[condInd].operador, etiquetaCond);
+        }
+        // Desapilar el terceto de salto de la primera condición
+        int tempInd = desapilarTercetos();
+        int cond2Ind = condInd; // Salto de la segunda condición (invertido)
+        // Crear un salto incondicional para el caso en que la primera condición sea falsa
+        condMultInd = crearTerceto("BI", "", "");
+        // Modificar el salto de la primera condición para que apunte a la segunda
+        modificarTerceto_saltoCondicional(tempInd);
+        // Apilar el salto de la segunda condición
+        apilarTercetos(cond2Ind);
+        condMult = true; // Indicar condición múltiple
+	}
+	|condiciones OR NOT condicion{printf("condiciones OR NOT condicion es condiciones\n");
+		if (condInd != -1) {
+            // Invertir el salto de la segunda condición
+            char* saltoOriginal = etiquetaCond;
+            if (strcmp(saltoOriginal, "BLE") == 0) strcpy(etiquetaCond, "BGT");
+            else if (strcmp(saltoOriginal, "BGT") == 0) strcpy(etiquetaCond, "BLE");
+            else if (strcmp(saltoOriginal, "BLT") == 0) strcpy(etiquetaCond, "BGE");
+            else if (strcmp(saltoOriginal, "BGE") == 0) strcpy(etiquetaCond, "BLT");
+            else if (strcmp(saltoOriginal, "BNE") == 0) strcpy(etiquetaCond, "BEQ");
+            else if (strcmp(saltoOriginal, "BEQ") == 0) strcpy(etiquetaCond, "BNE");
+            strcpy(tercetos[condInd].operador, etiquetaCond);
+        }
+        // Desapilar el terceto de salto de la primera condición
+        int tempInd = desapilarTercetos();
+        int cond2Ind = condInd; // Salto de la segunda condición (invertido)
+        // Modificar el salto de la primera condición (inverso para OR)
+        modificarTerceto_etiquetaCond(tercetos[tempInd].operador, tempInd);
+        modificarTerceto_saltoCondicional(tempInd);
+        // Apilar el salto de la segunda condición
+        apilarTercetos(cond2Ind);
+        condMult = true; // Indicar condición múltiple
+	}
 	;
 
 condicion:
-	 expresion OP_MAYOR expresion  {printf("expresion OP_MEN expresion es condicion\n");}
-	| expresion OP_MAYOR_IGUAL expresion  {printf("expresion OP_MAY expresion es condicion\n");}
-	| expresion OP_MENOR expresion  {printf("expresion OP_MENI expresion es condicion\n");}
-	| expresion OP_MENOR_IGUAL expresion  {printf("expresion OP_MAYI expresion es condicion\n");}
-	| expresion OP_IGUAL expresion  {printf("expresion OP_IGUAL expresion es condicion\n");}
-	| expresion OP_DISTINTO expresion  {printf("expresion OP_DIST expresion es condicion\n");}
+	 expresion {
+        condIzqInd = Eind; // Guardar el índice de la primera expresión
+    } OP_MAYOR  expresion {sprintf(condIzqIndC, "[%d]", condIzqInd);
+        if (apilarInd == true) { apilar(&pilaInit, condIzqIndC); }
+        sprintf(EindC, "[%d]", Eind);
+        crearTerceto("CMP", condIzqIndC, EindC);
+        strcpy(etiquetaCond, "BLE");
+        condInd = crearTerceto(etiquetaCond, "", "");
+        apilarTercetos(condInd);}
+	| expresion {
+        condIzqInd = Eind; // Guardar el índice de la primera expresión
+    } OP_MAYOR_IGUAL expresion {sprintf(condIzqIndC, "[%d]", condIzqInd);
+        if (apilarInd == true) { apilar(&pilaInit, condIzqIndC); }
+        sprintf(EindC, "[%d]", Eind);
+        crearTerceto("CMP", condIzqIndC, EindC);
+        strcpy(etiquetaCond, "BLT");
+        condInd = crearTerceto(etiquetaCond, "", "");
+        apilarTercetos(condInd);}
+	| expresion {
+        condIzqInd = Eind; // Guardar el índice de la primera expresión
+    } OP_MENOR  expresion {sprintf(condIzqIndC, "[%d]", condIzqInd);
+        if (apilarInd == true) { apilar(&pilaInit, condIzqIndC); }
+        sprintf(EindC, "[%d]", Eind);
+        crearTerceto("CMP", condIzqIndC, EindC);
+        strcpy(etiquetaCond, "BGE");
+        condInd = crearTerceto(etiquetaCond, "", "");
+        apilarTercetos(condInd);}
+	| expresion {
+        condIzqInd = Eind; // Guardar el índice de la primera expresión
+    } OP_MENOR_IGUAL expresion {sprintf(condIzqIndC, "[%d]", condIzqInd);
+        if (apilarInd == true) { apilar(&pilaInit, condIzqIndC); }
+        sprintf(EindC, "[%d]", Eind);
+        crearTerceto("CMP", condIzqIndC, EindC);
+        strcpy(etiquetaCond, "BGT");
+        condInd = crearTerceto(etiquetaCond, "", "");
+        apilarTercetos(condInd);}
+	| expresion {
+        condIzqInd = Eind; // Guardar el índice de la primera expresión
+    } OP_IGUAL expresion {sprintf(condIzqIndC, "[%d]", condIzqInd);
+        if (apilarInd == true) { apilar(&pilaInit, condIzqIndC); }
+        sprintf(EindC, "[%d]", Eind);
+        crearTerceto("CMP", condIzqIndC, EindC);
+        strcpy(etiquetaCond, "BNE");
+        condInd = crearTerceto(etiquetaCond, "", "");
+        apilarTercetos(condInd);}
+	| expresion {
+        condIzqInd = Eind; // Guardar el índice de la primera expresión
+    } OP_DISTINTO expresion {sprintf(condIzqIndC, "[%d]", condIzqInd);
+        if (apilarInd == true) { apilar(&pilaInit, condIzqIndC); }
+        sprintf(EindC, "[%d]", Eind);
+        crearTerceto("CMP", condIzqIndC, EindC);
+        strcpy(etiquetaCond, "BEQ");
+        condInd = crearTerceto(etiquetaCond, "", "");
+        apilarTercetos(condInd);}
 	;
 	
 expresion:
-     termino {printf("    Termino es Expresion\n");}
-	|expresion OP_SUMA termino {printf("    Expresion+Termino es Expresion\n");}
-	|expresion OP_RESTA termino {printf("    Expresion-Termino es Expresion\n");}
+     termino {Eind = Tind;}
+	|expresion OP_SUMA termino {sprintf(EindC, "[%d]", Eind); sprintf(TindC, "[%d]", Tind); Eind = crearTerceto("+", EindC, TindC);}
+	|expresion OP_RESTA termino {sprintf(EindC, "[%d]", Eind); sprintf(TindC, "[%d]", Tind); Eind = crearTerceto("-", EindC, TindC);}
 	;
 
 termino: 
-     factor {printf("    Factor es Termino\n");}
-    |termino OP_PRODUCTO factor {printf("     Termino*Factor es Termino\n");}
-    |termino OP_COCIENTE factor {printf("     Termino/Factor es Termino\n");}
+     factor {Tind = Find;}
+    |termino OP_PRODUCTO factor {sprintf(TindC, "[%d]", Tind); sprintf(FindC, "[%d]", Find); Tind = crearTerceto("*", TindC, FindC);}
+    |termino OP_COCIENTE factor {sprintf(TindC, "[%d]", Tind); sprintf(FindC, "[%d]", Find); Tind = crearTerceto("/", TindC, FindC);}
     ;
 
 factor: 
-      ID {printf("    ID es Factor \n");}
-      | CONST_INT {printf("CONST_INT es Factor\n");}
-	  | CONST_FLOAT {printf("CONST_FLOAT es Factor\n");}
-	  | CONST_STRING {printf("CONST_STRING es Factor\n");}
-	| PAR_AP expresion PAR_CL {printf("    Expresion entre parentesis es Factor\n");}
+      ID {Find = crearTerceto(yytext,"","");}
+      | CONST_INT {strcpy(nombre, "_");
+    strcat(nombre, yytext); insertarEnOrden(&listaSimbolos,nombre,"",yytext,0); Find = crearTerceto(nombre,"","");}
+	  | CONST_FLOAT {strcpy(nombre, "_");
+    strcat(nombre, yytext); insertarEnOrden(&listaSimbolos,nombre,"",yytext,0); Find = crearTerceto(nombre,"","");}
+	  | CONST_STRING {strcpy(nombre, "_");
+                             strcat(nombre, eliminarComillas(valor)); insertarEnOrden(&listaSimbolos,nombre,"",valor,strlen(eliminarComillas(valor)) ? strlen(eliminarComillas(valor)) : 0); 
+                             CADind = crearTerceto(nombre, "", "");}
+	| PAR_AP expresion PAR_CL {Find = Eind;}
 	| OP_RESTA factor { printf("-Factor es Factor\n"); }
      	;
 
@@ -272,11 +498,83 @@ int main(int argc, char *argv[])
     else
     { 
         printf("\n El archivo %s se abrio correctamente\n", argv[1]);
+		crearLista(&listaSimbolos);
+        crear_pila(&pilaInit);
         yyparse();
+		eliminarTabla(&listaSimbolos);
+        imprimirTercetos();
+        vaciar_pila(&pilaInit);
         
     }
+	printf("\nFLEX finalizo la lectura del archivo %s \n", argv[1]);
 	fclose(yyin);
         return 0;
+}
+
+int yyerrorTiposEntreIds(char* ptr)
+     {
+       printf("Error semantico: asignacion o comparacion (id y id o id y cte) de distinto tipos en id = %s, saliendo... \n",yytext);
+         exit (1);
+     }
+
+
+int yyerrorNoExisteVariable(char* ptr)
+     {
+       printf("Error semantico: variable no declarada: %s, saliendo... \n",ptr);
+       exit (1);
+     }
+
+bool esPrimo(int num){
+	if (num < 2) return false;
+	for(int i=2;i*i<=num;i++){
+		if(num % i == 0)return false;
+	}
+	return true;
+}
+
+void sumarPrimos(int N){
+	int suma = 0;
+	int contador = 0;
+	int numero = 2;
+	
+	char primo[10];
+	int Ant;
+	int Sig;
+	int Sum;
+	char AntC[50];
+	char SigC[50];
+	
+	while(contador < N){
+		if(esPrimo(numero)){
+			
+			
+			
+			if(contador==0){
+				
+				sprintf(primo,"_%d",numero);
+				Ant=crearTerceto(primo,"","");
+				memset(primo,0,sizeof(primo));
+				
+			}else{
+				
+				sprintf(primo,"_%d",numero);
+				Sig=crearTerceto(primo,"","");
+				memset(primo,0,sizeof(primo));
+				
+				sprintf(AntC, "[%d]", Ant);
+				sprintf(SigC, "[%d]", Sig);
+				
+				Sum=crearTerceto("+",AntC,SigC);
+				memset(AntC,0,sizeof(AntC));
+				memset(SigC,0,sizeof(SigC));
+				Ant=Sum;
+			}
+			
+			suma+=numero;
+			contador++;
+		}
+		numero++;
+	}
 }
 
 /*int yyerror(void)
