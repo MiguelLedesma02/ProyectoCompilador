@@ -163,3 +163,17 @@ n|-|1|-
 "a + 5 es mayor que b * 2"|-|26|"a + 5 es mayor que b * 2"
 "c - 3 es menor o igual a 10"|-|29|"c - 3 es menor o igual a 10"
 "a + b es igual a x"|-|20|"a + b es igual a x"
+Float|-|5|-
+"asldk  fh sjf"|-|15|"asldk  fh sjf"
+"c es mas grande que x"|-|23|"c es mas grande que x"
+"c es mas chico o igual a x"|-|28|"c es mas chico o igual a x"
+4|-|1|4
+"c es mas grande que x"|-|23|"c es mas grande que x"
+"asldk  fh sjf"|-|15|"asldk  fh sjf"
+"c es mas grande que x"|-|23|"c es mas grande que x"
+"c es mas chico o igual a x"|-|28|"c es mas chico o igual a x"
+"c es mas grande que x"|-|23|"c es mas grande que x"
+"ewr"|-|5|"ewr"
+"x es mas grande que b y c es -|-|47|"x es mas grande que b y c es mas grande que x"
+"x es mas grande que r o c es -|-|47|"x es mas grande que r o c es mas grande que x"
+"x no es mas grande que r"|-|26|"x no es mas grande que r"

@@ -60,6 +60,9 @@ char numeroABuscar[50];
 char pivotIndC[50];
 char auxIndC[50];
 char nombreVarIzq[32];
+
+bool esPrimo(int);
+void sumarPrimos(int);
 %}
 
 %union{
@@ -228,7 +231,14 @@ reorder:
     ;
 
 sumfirstprimes:
-	ID EQ SUMFIRSTPRIMES PAR_AP CONST_INT PAR_CL {printf("ID OP_ASIG SUMFIRSTPRIMES PAR_AP CONST_INT PAR_CL es sumfirstprimes\n");}
+	ID EQ SUMFIRSTPRIMES PAR_AP CONST_INT
+	{strcpy(numeroABuscar, yytext); crearTerceto(":=", "@N", numeroABuscar);}
+	{
+		int valorEntero = atoi(numeroABuscar);
+		sumarPrimos(valorEntero);
+		
+	}
+	PAR_CL {printf("ID OP_ASIG SUMFIRSTPRIMES PAR_AP CONST_INT PAR_CL es sumfirstprimes\n");}
 	;
 	
 expresiones:
@@ -513,6 +523,59 @@ int yyerrorNoExisteVariable(char* ptr)
        printf("Error semantico: variable no declarada: %s, saliendo... \n",ptr);
        exit (1);
      }
+
+bool esPrimo(int num){
+	if (num < 2) return false;
+	for(int i=2;i*i<=num;i++){
+		if(num % i == 0)return false;
+	}
+	return true;
+}
+
+void sumarPrimos(int N){
+	int suma = 0;
+	int contador = 0;
+	int numero = 2;
+	
+	char primo[10];
+	int Ant;
+	int Sig;
+	int Sum;
+	char AntC[50];
+	char SigC[50];
+	
+	while(contador < N){
+		if(esPrimo(numero)){
+			
+			
+			
+			if(contador==0){
+				
+				sprintf(primo,"_%d",numero);
+				Ant=crearTerceto(primo,"","");
+				memset(primo,0,sizeof(primo));
+				
+			}else{
+				
+				sprintf(primo,"_%d",numero);
+				Sig=crearTerceto(primo,"","");
+				memset(primo,0,sizeof(primo));
+				
+				sprintf(AntC, "[%d]", Ant);
+				sprintf(SigC, "[%d]", Sig);
+				
+				Sum=crearTerceto("+",AntC,SigC);
+				memset(AntC,0,sizeof(AntC));
+				memset(SigC,0,sizeof(SigC));
+				Ant=Sum;
+			}
+			
+			suma+=numero;
+			contador++;
+		}
+		numero++;
+	}
+}
 
 /*int yyerror(void)
      {
