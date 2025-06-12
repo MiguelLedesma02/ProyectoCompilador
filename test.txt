@@ -4,5 +4,4 @@ init {
     b: string
 }
 
-
 x = sumFirstPrimes(5)

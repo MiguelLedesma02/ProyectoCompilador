@@ -80,8 +80,8 @@ FIB               "FIB"
 /*Tokens básicos*/
 
 ID     {LETRA}({LETRA}|{DIGITO}|"_")*
-CONST_INT         {DIGITO}+
-CONST_FLOAT       (({DIGITO}+("."{DIGITO}*)?)|("."{DIGITO}+))([eE][-+]?{DIGITO}+)?
+CONST_INT         "-"?{DIGITO}+
+CONST_FLOAT       "-"?(({DIGITO}+("."{DIGITO}*)?)|("."{DIGITO}+))([eE][-+]?{DIGITO}+)?
 CONST_STRING      \"[^\n"]*\"
 OP_ASIG           ":="
 COMENTARIO        "#+"([^\n]|\n)*"+#"
@@ -330,7 +330,7 @@ int verificarRangoFloat(char* tk)
 {
     /* tk es el lexema */
 
-    int valor = atof(tk);
+    float valor = atof(tk);
 
     if(valor >= MIN_VALOR_FLOAT && valor <= MAX_VALOR_FLOAT)
         return 0;

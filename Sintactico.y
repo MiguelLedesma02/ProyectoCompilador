@@ -62,7 +62,7 @@ char auxIndC[50];
 char nombreVarIzq[32];
 
 bool esPrimo(int);
-void sumarPrimos(int);
+int sumarPrimos(int);
 %}
 
 %union{
@@ -127,7 +127,7 @@ programa:
 	;
 
 variables:
-	INIT LLA_AP declaraciones LLA_CL {printf("bloque sentencia es bloque\n\n");}
+	INIT LLA_AP declaraciones LLA_CL {printf("INIT LLA_AP declaraciones LLA_CL\n\n");}
 	;
 
 declaraciones:
@@ -232,26 +232,23 @@ reorder:
 
 sumfirstprimes:
 	ID EQ SUMFIRSTPRIMES PAR_AP CONST_INT
+	{strcpy(numeroABuscar, yytext); crearTerceto(":=", "@N", numeroABuscar);}
 	{
-        int suma = 0;
-        crearTerceto("=", suma , 0);
-        int cont = 0;
-        int num = 2;
-        int N = $5;
-        int id = atoi($1);
-        int ind;
 
-        while (cont < N) {
-            if (esPrimo(num)) {
-                ind=crearTerceto("+", suma, num);
-                crearTerceto("=", suma, ind);
-                cont++;
-            }
-            num++;
-        }
-        crearTerceto("=", id, suma);
+        char id[50];
+        char resu[50];
 
-    }
+		int valorEntero = atoi(numeroABuscar);
+		int terResu = sumarPrimos(valorEntero);
+        
+        char temp[51];
+        strcpy(temp, $1);
+        sprintf(id, "_%s", temp);
+        sprintf(resu, "[%d]", terResu);
+
+        crearTerceto(":=", id, resu);
+
+	}
 	PAR_CL {printf("ID OP_ASIG SUMFIRSTPRIMES PAR_AP CONST_INT PAR_CL es sumfirstprimes\n");}
 	;
 	
@@ -546,7 +543,7 @@ bool esPrimo(int num){
 	return true;
 }
 
-void sumarPrimos(int N){
+int sumarPrimos(int N){
 	int suma = 0;
 	int contador = 0;
 	int numero = 2;
@@ -560,9 +557,7 @@ void sumarPrimos(int N){
 	
 	while(contador < N){
 		if(esPrimo(numero)){
-			
-			
-			
+
 			if(contador==0){
 				
 				sprintf(primo,"_%d",numero);
@@ -589,6 +584,8 @@ void sumarPrimos(int N){
 		}
 		numero++;
 	}
+    
+    return Ant;
 }
 
 /*int yyerror(void)
