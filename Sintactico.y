@@ -232,12 +232,26 @@ reorder:
 
 sumfirstprimes:
 	ID EQ SUMFIRSTPRIMES PAR_AP CONST_INT
-	{strcpy(numeroABuscar, yytext); crearTerceto(":=", "@N", numeroABuscar);}
 	{
-		int valorEntero = atoi(numeroABuscar);
-		sumarPrimos(valorEntero);
-		
-	}
+        int suma = 0;
+        crearTerceto("=", suma , 0);
+        int cont = 0;
+        int num = 2;
+        int N = $5;
+        int id = atoi($1);
+        int ind;
+
+        while (cont < N) {
+            if (esPrimo(num)) {
+                ind=crearTerceto("+", suma, num);
+                crearTerceto("=", suma, ind);
+                cont++;
+            }
+            num++;
+        }
+        crearTerceto("=", id, suma);
+
+    }
 	PAR_CL {printf("ID OP_ASIG SUMFIRSTPRIMES PAR_AP CONST_INT PAR_CL es sumfirstprimes\n");}
 	;
 	
