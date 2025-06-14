@@ -30,6 +30,15 @@ char tipoLadoIzq[200];
 char tipoLadoDer[200];
 int longitud;
 
+//Variables reorder
+bool reorderActivo = false;
+char reorderExpresion[200];
+char reorderAux[200];
+char* listaReorder[10];
+int posExpresion = 0;
+int izq = 0;
+int pivot = 0;
+
 int Eind;
 int Tind;
 int Find;
@@ -63,6 +72,12 @@ char nombreVarIzq[32];
 
 bool esPrimo(int);
 int sumarPrimos(int);
+
+int validarParametrosReorder(int izq, int pivot, int tam);
+void reorderIzquierda(char* lista[], int pivot);
+void reorderDerecha(char* lista[], int pivot, int tam);
+void reorder(char* lista[], int izq, int pivot, int tam);
+
 %}
 
 %union{
@@ -75,10 +90,10 @@ int sumarPrimos(int);
 %token <strVal> CONST_STRING
 %token <strVal> ID
 %token OP_ASIG
-%token OP_SUMA
-%token OP_PRODUCTO
-%token OP_RESTA
-%token OP_COCIENTE
+%token <strVal> OP_SUMA
+%token <strVal> OP_PRODUCTO
+%token <strVal> OP_RESTA
+%token <strVal> OP_COCIENTE
 %token PAR_AP
 %token PAR_CL
 %token INIT
@@ -166,11 +181,11 @@ bloque:
 	|sentencia{printf("sentencia es bloque\n\n");}
 	;
 
-sentencia:  	   
+sentencia:
 	asignacion {printf(" FIN\n");} ;
 	|iteracion{printf("iteracion es sentencia\n");}
 	|seleccion{printf("seleccion es sentencia\n");}
-	|read{printf("read es sentencia\n");} 
+	|read{printf("read es sentencia\n");}
 	|write{printf("write es sentencia\n");}
 	|reorder{printf("reorder es sentencia\n");}
 	|sumfirstprimes {printf("sumfirstprimes es sentencia\n");}
@@ -179,8 +194,8 @@ sentencia:
 	|contardistinto {printf("contar distinto es sentencia\n");}
 	|setswitch {printf("setswitch es sentencia\n");}
 	;
-	
-asignacion: 
+
+asignacion:
     ID OP_ASIG expresion {sprintf(EindC, "[%d]", Eind); Aind = crearTerceto(":=", nombreVarIzq, EindC);}
 	;
 
@@ -202,31 +217,25 @@ write:
 	| WRITE PAR_AP CONST_STRING {strcpy(valor, yytext); strcpy(nombre, "_");
 								strcat(nombre, eliminarComillas(valor)); insertarEnOrden(&listaSimbolos,nombre,"",valor,strlen(eliminarComillas(valor)) ? strlen(eliminarComillas(valor)) : 0); crearTerceto("WRITE", valor, "");} PAR_CL
 	;
-	
+
 reorder:
-    REORDER PAR_AP COR_AP expresiones COR_CL COMA CONST_INT COMA CONST_INT PAR_CL {
+    REORDER PAR_AP COR_AP {reorderActivo = true;} expresiones {reorderActivo = false;} COR_CL COMA CONST_INT {izq = atoi(yytext);} COMA CONST_INT {pivot = atoi(yytext);} PAR_CL {
         printf("REORDER PAR_AP COR_AP expresiones COR_CL COMA CONST_INT COMA CONST_INT PAR_CL es reorder\n");
-        // Primer CONST_INT
-        strcpy(nombre, "_");
-        strcat(nombre, $7); // Captura el primer índice
-        insertarEnOrden(&listaSimbolos, nombre, "", $7, 0);
-        sprintf(pivotIndC, "[%d]", pivotInd);
-        pivotInd = crearTerceto(nombre, "", "");
+
+        printf("\nANTES DE REORDENAR\n");
+        for(int i = 0; i < posExpresion; i ++)
+            printf("Expresion[%d] = %s\n", i, listaReorder[i]);
         
-        // Segundo CONST_INT
-        strcpy(nombre, "_");
-        strcat(nombre, $9); // Captura el segundo índice
-        insertarEnOrden(&listaSimbolos, nombre, "", $9, 0);
-        sprintf(auxIndC, "[%d]", auxInd);
-        auxInd = crearTerceto(nombre, "", "");
+        reorder(listaReorder, izq, pivot, posExpresion);
+
+        printf("\nDESPUES DE REORDENAR\n");
+        for(int i = 0; i < posExpresion; i ++)
+        {
+            printf("Expresion[%d] = %s\n", i, listaReorder[i]);
+            free(listaReorder[posExpresion]);
+        }
         
-        // Terceto REORDER con el arreglo y los índices
-        sprintf(EindC, "[%d]", Eind); // Índice de la última expresión (representa el arreglo)
-        //crearTerceto("REORDER", EindC, pivotIndC, auxIndC);
-        
-        // Terceto WRITE para el arreglo reordenado (asumiendo que es parte del comportamiento)
-        sprintf(AindC, "_[%d]", Eind); // Representa el arreglo completo
-        crearTerceto("WRITE", AindC, "");
+
     }
     ;
 
@@ -240,7 +249,7 @@ sumfirstprimes:
 
 		int valorEntero = atoi(numeroABuscar);
 		int terResu = sumarPrimos(valorEntero);
-        
+
         char temp[51];
         strcpy(temp, $1);
         sprintf(id, "_%s", temp);
@@ -251,20 +260,27 @@ sumfirstprimes:
 	}
 	PAR_CL {printf("ID OP_ASIG SUMFIRSTPRIMES PAR_AP CONST_INT PAR_CL es sumfirstprimes\n");}
 	;
-	
+
 expresiones:
     expresiones COMA expresion {
         printf("expresiones COMA expresion es expresiones\n");
-        sprintf(EindC, "[%d]", Eind);
-        apilar(&pilaInit, EindC); // Apilar índice de la expresión
+        listaReorder[posExpresion] = malloc(strlen(reorderExpresion) + 1);
+        strcpy(listaReorder[posExpresion], reorderExpresion);
+        strcpy(reorderExpresion, "");
+
+        posExpresion ++;
     }
     | expresion {
+
         printf("expresion es expresiones\n");
-        sprintf(EindC, "[%d]", Eind);
-        apilar(&pilaInit, EindC); // Apilar índice de la expresión
+        listaReorder[posExpresion] = malloc(strlen(reorderExpresion) + 1);
+        strcpy(listaReorder[posExpresion], reorderExpresion);
+        strcpy(reorderExpresion, "");
+
+        posExpresion ++;
     }
     ;
-	
+
 condiciones:
     condicion {printf("condicion es condiciones\n");}
 	|NOT condicion {printf("NOT condicion es condiciones\n");
@@ -406,27 +422,27 @@ condicion:
         condInd = crearTerceto(etiquetaCond, "", "");
         apilarTercetos(condInd);}
 	;
-	
+
 expresion:
      termino {Eind = Tind;}
-	|expresion OP_SUMA termino {sprintf(EindC, "[%d]", Eind); sprintf(TindC, "[%d]", Tind); Eind = crearTerceto("+", EindC, TindC);}
-	|expresion OP_RESTA termino {sprintf(EindC, "[%d]", Eind); sprintf(TindC, "[%d]", Tind); Eind = crearTerceto("-", EindC, TindC);}
+	|expresion OP_SUMA {if(reorderActivo) {sprintf(reorderAux, "%s", yytext); strcat(reorderExpresion, reorderAux);}} termino {sprintf(EindC, "[%d]", Eind); sprintf(TindC, "[%d]", Tind); Eind = crearTerceto("+", EindC, TindC);}
+	|expresion OP_RESTA {if(reorderActivo) {sprintf(reorderAux, "%s", yytext); strcat(reorderExpresion, reorderAux);}} termino {sprintf(EindC, "[%d]", Eind); sprintf(TindC, "[%d]", Tind); Eind = crearTerceto("-", EindC, TindC);}
 	;
 
-termino: 
+termino:
      factor {Tind = Find;}
-    |termino OP_PRODUCTO factor {sprintf(TindC, "[%d]", Tind); sprintf(FindC, "[%d]", Find); Tind = crearTerceto("*", TindC, FindC);}
-    |termino OP_COCIENTE factor {sprintf(TindC, "[%d]", Tind); sprintf(FindC, "[%d]", Find); Tind = crearTerceto("/", TindC, FindC);}
+    |termino OP_PRODUCTO {if(reorderActivo) {sprintf(reorderAux, "%s", yytext); strcat(reorderExpresion, reorderAux);}} factor {sprintf(TindC, "[%d]", Tind); sprintf(FindC, "[%d]", Find); Tind = crearTerceto("*", TindC, FindC);}
+    |termino OP_COCIENTE {if(reorderActivo) {sprintf(reorderAux, "%s", yytext); strcat(reorderExpresion, reorderAux);}} factor {sprintf(TindC, "[%d]", Tind); sprintf(FindC, "[%d]", Find); Tind = crearTerceto("/", TindC, FindC);}
     ;
 
-factor: 
-      ID {Find = crearTerceto(yytext,"","");}
-      | CONST_INT {strcpy(nombre, "_");
+factor:
+      ID { if(reorderActivo){sprintf(reorderAux, "%s", yytext); strcat(reorderExpresion, reorderAux);} } {Find = crearTerceto(yytext,"","");}
+      | CONST_INT { if(reorderActivo){sprintf(reorderAux, "%s", yytext); strcat(reorderExpresion, reorderAux);} } {strcpy(nombre, "_");
     strcat(nombre, yytext); insertarEnOrden(&listaSimbolos,nombre,"",yytext,0); Find = crearTerceto(nombre,"","");}
-	  | CONST_FLOAT {strcpy(nombre, "_");
+	  | CONST_FLOAT { if(reorderActivo){sprintf(reorderAux, "%s", yytext); strcat(reorderExpresion, reorderAux);} } {strcpy(nombre, "_");
     strcat(nombre, yytext); insertarEnOrden(&listaSimbolos,nombre,"",yytext,0); Find = crearTerceto(nombre,"","");}
 	  | CONST_STRING {strcpy(nombre, "_");
-                             strcat(nombre, eliminarComillas(valor)); insertarEnOrden(&listaSimbolos,nombre,"",valor,strlen(eliminarComillas(valor)) ? strlen(eliminarComillas(valor)) : 0); 
+                             strcat(nombre, eliminarComillas(valor)); insertarEnOrden(&listaSimbolos,nombre,"",valor,strlen(eliminarComillas(valor)) ? strlen(eliminarComillas(valor)) : 0);
                              CADind = crearTerceto(nombre, "", "");}
 	| PAR_AP expresion PAR_CL {Find = Eind;}
 	| OP_RESTA factor { printf("-Factor es Factor\n"); }
@@ -504,10 +520,10 @@ int main(int argc, char *argv[])
     if((yyin = fopen(argv[1], "rt"))==NULL)
     {
         printf("\nNo se puede abrir el archivo de prueba: %s\n", argv[1]);
-       
+
     }
     else
-    { 
+    {
         printf("\n El archivo %s se abrio correctamente\n", argv[1]);
 		crearLista(&listaSimbolos);
         crear_pila(&pilaInit);
@@ -515,7 +531,7 @@ int main(int argc, char *argv[])
 		eliminarTabla(&listaSimbolos);
         imprimirTercetos();
         vaciar_pila(&pilaInit);
-        
+
     }
 	printf("\nFLEX finalizo la lectura del archivo %s \n", argv[1]);
 	fclose(yyin);
@@ -547,45 +563,147 @@ int sumarPrimos(int N){
 	int suma = 0;
 	int contador = 0;
 	int numero = 2;
-	
+
 	char primo[10];
 	int Ant;
 	int Sig;
 	int Sum;
 	char AntC[50];
 	char SigC[50];
-	
+
 	while(contador < N){
 		if(esPrimo(numero)){
 
 			if(contador==0){
-				
+
 				sprintf(primo,"_%d",numero);
 				Ant=crearTerceto(primo,"","");
 				memset(primo,0,sizeof(primo));
-				
+
 			}else{
-				
+
 				sprintf(primo,"_%d",numero);
 				Sig=crearTerceto(primo,"","");
 				memset(primo,0,sizeof(primo));
-				
+
 				sprintf(AntC, "[%d]", Ant);
 				sprintf(SigC, "[%d]", Sig);
-				
+
 				Sum=crearTerceto("+",AntC,SigC);
 				memset(AntC,0,sizeof(AntC));
 				memset(SigC,0,sizeof(SigC));
 				Ant=Sum;
 			}
-			
+
 			suma+=numero;
 			contador++;
 		}
 		numero++;
 	}
-    
+
     return Ant;
+}
+
+int validarParametrosReorder(int izq, int pivot, int tam)
+{
+    //Parámetros
+    // izq: Si es 1, reordena a la izquierda del pivot. Si es 0, reordena a la derecha del pivot.
+    // pivot: Es la posición que se usa como referencia para el reordenamiento.
+    // tam: Indica el tamaño de la lista.
+
+    //Si la lista está vacía, no hay nada que reordenar.
+    if(tam == 0)
+    {
+        printf("\nERROR: No puede reordenarse una lista vacia.\n\n");
+        return 0;
+    }
+
+    //Si el pivot es igual o superior al tamaño de la lista, no se puede ordenar.
+    if(pivot >= tam)
+    {
+        printf("\nERROR: El pivot supera el tamano de la lista.\n\n");
+        return 0;
+    }
+
+    //Si el pivot es el primer elemento, no se puede reordenar hacia la izquierda.
+    if(izq && pivot == 0)
+    {
+        printf("\nERROR: No se puede reordenar hacia la izquierda cuando el pivot es el primer elemento.\n\n");
+        return 0;
+    }
+
+    //Si el pivot es el último elemento, no se puede reordenar hacia la derecha.
+    if(!izq && pivot == tam-1)
+    {
+        printf("\nERROR: No se puede reordenar hacia la derecha cuando el pivot es el ultimo elemento.\n\n");
+        return 0;
+    }
+
+    return 1;
+}
+
+void reorderIzquierda(char* lista[], int pivot)
+{
+    //Parámetros
+    // lista[]: Contiene la lista de expresiones
+    // pivot: Es la posición que se usa como referencia para el reordenamiento.
+
+    //Variables Locales
+    char* aux;
+    int inicio = 0;
+    int fin = pivot/2;
+
+    //Se recorre la lista desde el comienzo hasta la mitad
+    while(inicio <= fin)
+    {
+        aux = lista[pivot-inicio];
+        lista[pivot-inicio] = lista[inicio];
+        lista[inicio] = aux;
+
+        inicio ++;
+    }
+}
+
+void reorderDerecha(char* lista[], int pivot, int tam)
+{
+    //Parámetros
+    // lista[]: Contiene la lista de expresiones
+    // pivot: Es la posición que se usa como referencia para el reordenamiento.
+    // tam: Indica el tamaño de la lista.
+
+    //Variables Locales
+    char* aux;
+    int inicio = pivot;
+    int fin = tam - 1;
+
+    while (inicio < fin)
+    {
+        aux = lista[inicio];
+        lista[inicio] = lista[fin];
+        lista[fin] = aux;
+
+        inicio++;
+        fin--;
+    }
+}
+
+void reorder(char* lista[], int izq, int pivot, int tam)
+{
+    //Parámetros
+    // lista[]: Contiene la lista de expresiones
+    // izq: Si es 1, reordena a la izquierda del pivot. Si es 0, reordena a la derecha del pivot.
+    // pivot: Es la posición que se usa como referencia para el reordenamiento.
+    // tam: Indica el tamaño de la lista.
+
+    if(!validarParametrosReorder(izq, pivot, tam))
+        return;
+    
+    if(izq)
+        reorderIzquierda(lista, pivot); 
+    else
+        reorderDerecha(lista, pivot, tam);
+
+    return;
 }
 
 /*int yyerror(void)

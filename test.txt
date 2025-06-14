@@ -1,7 +1,6 @@
-init {
-    a: float
-    x, c, r, z, f: int
-    b: string
+init
+{
+    x: int
 }
 
-x = sumFirstPrimes(5)
+reorder([x+3, 1+1, 9-x], 1, 2)
