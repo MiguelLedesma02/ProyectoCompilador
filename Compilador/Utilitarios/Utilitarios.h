@@ -8,6 +8,7 @@
 /*CONSTANTES*/
 #define MAX_LONG_ID 30
 #define MAX_LONG_STR 50
-#define MAX_LONG_TD 10
+#define MAX_LONG_TD 15
+#define MAX_LONG_LONG 10
 
 #endif

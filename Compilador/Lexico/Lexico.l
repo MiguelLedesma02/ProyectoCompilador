@@ -1,10 +1,11 @@
 %{
 //#include "y.tab.h"
-#include "Lexico/Lexico.h"
-#include "Archivo/Archivo.h"
+#include "Lexico.h"
+#include "../Archivo/Archivo.h"
 
 /*VARIABLES GLOBALES*/
 FILE *plexer = NULL;
+FILE *pst = NULL;
 
 char *yytext;
 
@@ -145,8 +146,8 @@ DOBLE_DOS_PUNTOS    "::"
 {ID}                { 
                         if(verificarLongId(yytext))
                         {
-                            fprintf(plexer, "IDENTIFICADOR: %s\n", yytext);
-                            agregarTablaSimbolos(yytext, 1);
+                            fprintf(plexer, "ID: %s\n", yytext);
+                            agregarToken(pst, yytext, NULL);
                             //yylval.strVal = strdup(yytext);
                         }
                         else
@@ -158,7 +159,7 @@ DOBLE_DOS_PUNTOS    "::"
                         if(verificarRangoInt(yytext))
                         { 
                             fprintf(plexer, "CONST_INT: %s\n", yytext);
-                            agregarTablaSimbolos(yytext, 0);
+                            agregarToken(pst, yytext, "CTE_INTEGER");
                         }
                         else
                         {
@@ -169,7 +170,7 @@ DOBLE_DOS_PUNTOS    "::"
                         if(verificarRangoFloat(yytext))
                         {
                             fprintf(plexer, "CONST_FLOAT: %s\n", yytext);
-                            agregarTablaSimbolos(yytext, 0);
+                            agregarToken(pst, yytext, "CTE_FLOAT");
                         }
                         else
                         {
@@ -180,7 +181,7 @@ DOBLE_DOS_PUNTOS    "::"
                         if(verificarLongString(yytext))
                         {
                             fprintf(plexer, "CONST_STRING: %s\n", yytext);
-                            agregarTablaSimbolos(yytext, 0);
+                            agregarToken(pst, yytext, "CTE_STRING");
                         }
                         else
                         {
@@ -202,23 +203,33 @@ DOBLE_DOS_PUNTOS    "::"
 
 int main (int argc, char* argv[])
 {
+    char nombreArchivo[] = "./Outputs/symbol_table.txt";
+
+    system("cls");
+
     if(abrirArchivo(&yyin, argv[1], "rt") == 1)
         return 1;
 
     if(abrirArchivo(&plexer, argv[2], "wt") == 1)
         return 1;
+    
+    if(abrirArchivo(&pst, nombreArchivo, "w+t") == 1)
+        return 1;
 
-    printf("\nINICIO DEL ANALISIS LEXICO\n");
+    printf("INICIO DEL ANALISIS LEXICO\n");
     printf("\n. . .\n");
 
     yylex();
     
     printf("\nFIN DEL ANALISIS LEXICO\n");
-    printf("\nTodos los tokens se encuentran en el archivo: %s\n", argv[2]);
+    printf("\n");
+    printf("Se creo el archivo: %s con todos los tokens.\n", argv[2]);
+    printf("Se creo el archivo: %s con todos los IDs y CTEs.\n", nombreArchivo);
     printf("\n");
 
     fclose(yyin);
     fclose(plexer);
+    fclose(pst);
 
     return 0;
 }

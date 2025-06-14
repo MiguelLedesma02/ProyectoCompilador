@@ -14,7 +14,8 @@ typedef struct
 
 /*FUNCIONES*/
 int abrirArchivo(FILE** pf, char* nombreArchivo, char* modo);
-int agregarTablaSimbolos(char* tk, int id);
-int buscarTokenEnArchivo(FILE* pf, char* tk);
+int buscarToken(FILE* pf, char* tk);
+void agregarToken(FILE* pf, char* tk, char* tipo);
+void eliminarCaracter(char* str, char ch);
 
 #endif
