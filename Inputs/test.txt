@@ -1,7 +1,7 @@
 init
 {
     x, y, z: int
-    var1, var2, string
+    var1, var2 : string
 }
 
 a := (x + 5) / 3

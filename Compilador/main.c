@@ -1,0 +1,47 @@
+#include "Utilitarios/Utilitarios.h"
+#include "Archivo/Archivo.h"
+
+extern int yyparse();
+extern FILE *yyin;
+
+/*VARIABLES GLOBALES*/
+FILE *plexer = NULL;
+FILE *pparser = NULL;
+FILE *pst = NULL;
+
+
+int main (int argc, char* argv[])
+{
+    char nombreArchivo[] = "./Outputs/symbol_table.txt";
+
+    if(abrirArchivo(&yyin, argv[1], "rt") == 1)
+        return 1;
+
+    if(abrirArchivo(&plexer, argv[2], "wt") == 1)
+        return 1;
+
+    if(abrirArchivo(&pparser, argv[3], "wt") == 1)
+        return 1;
+    
+    if(abrirArchivo(&pst, nombreArchivo, "w+t") == 1)
+        return 1;
+
+    printf("INICIO DE LA COMPILACION\n");
+    printf("\n. . .\n");
+
+    yyparse();
+    
+    printf("\nFIN DE LA COMPILACION\n");
+    printf("\n");
+    printf("Se creo el archivo: %s con todos los tokens.\n", argv[2]);
+    printf("Se creo el archivo: %s con todas las reglas.\n", argv[3]);
+    printf("Se creo el archivo: %s con todos los IDs y CTEs.\n", nombreArchivo);
+    printf("\n");
+
+    fclose(yyin);
+    fclose(plexer);
+    fclose(pparser);
+    fclose(pst);
+
+    return 0;
+}

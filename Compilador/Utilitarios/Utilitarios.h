@@ -11,4 +11,7 @@
 #define MAX_LONG_TD 15
 #define MAX_LONG_LONG 10
 
+/*FUNCIONES*/
+void eliminarCaracter(char* str, char ch);
+
 #endif

@@ -16,6 +16,5 @@ typedef struct
 int abrirArchivo(FILE** pf, char* nombreArchivo, char* modo);
 int buscarToken(FILE* pf, char* tk);
 void agregarToken(FILE* pf, char* tk, char* tipo);
-void eliminarCaracter(char* str, char ch);
 
 #endif
