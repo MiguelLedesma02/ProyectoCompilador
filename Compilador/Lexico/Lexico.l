@@ -199,7 +199,11 @@ DOBLE_DOS_PUNTOS    "::"
                         }
                     }  
 
-{OP_ASIG}           { fprintf(plexer, "OP_ASIG: %s\n", yytext); return OP_ASIG; }
+{OP_ASIG}           {
+                        fprintf(plexer, "OP_ASIG: %s\n", yytext);
+                        yylval.texto = strdup(yytext);
+                        return OP_ASIG;
+                    }
 
 {COMENTARIO}
 " "             		

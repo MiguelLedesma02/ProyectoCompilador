@@ -1,6 +1,7 @@
 #include "Utilitarios/Utilitarios.h"
 #include "Archivo/Archivo.h"
-#include "Tercetos.h"
+#include "Tercetos/Tercetos.h"
+#include "Pila/Pila.h"
 
 extern int yyparse();
 extern FILE *yyin;
@@ -10,6 +11,9 @@ FILE *plexer = NULL;
 FILE *pparser = NULL;
 FILE *ptercetos = NULL;
 FILE *pst = NULL;
+
+Pila* Epila;
+Pila* Tpila;
 
 
 int main (int argc, char* argv[])
@@ -31,6 +35,9 @@ int main (int argc, char* argv[])
     if(abrirArchivo(&pst, nombreArchivo, "w+t") == 1)
         return 1;
 
+    Epila = crearPila();
+    Tpila = crearPila();
+
     printf("INICIO DE LA COMPILACION\n");
     printf("\n. . .\n");
     
@@ -51,6 +58,9 @@ int main (int argc, char* argv[])
     fclose(pparser);
     fclose(ptercetos);
     fclose(pst);
+
+    destruirPila(Epila);
+    destruirPila(Tpila);
 
     return 0;
 }

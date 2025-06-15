@@ -1,13 +1,20 @@
 %{
 #include "../Utilitarios/Utilitarios.h"
 #include "../Tercetos/Tercetos.h"
+#include "../Pila/Pila.h"
 
 /*VARIABLES GLOBALES*/
 extern int yylineno;
 extern FILE *pparser;
 
+extern Pila* Epila;
+extern Pila* Tpila;
+
 /*INDICES*/
 
+int Strind;
+
+int Aind;
 int Eind;
 int Tind;
 int Find;
@@ -59,7 +66,7 @@ int yyerror(char* descripcion);
 %token <texto> CONST_INT
 %token <texto> CONST_FLOAT
 %token <texto> CONST_STRING
-%token OP_ASIG
+%token <texto> OP_ASIG
 
 /*OPERADORES ARITMÉTICOS*/
 
@@ -192,11 +199,37 @@ sentencia:
 
 asignacion:
 	ID OP_ASIG expresion
+    {
+        char op1[10];
+        char op2[10];
+
+        Aind = crearTerceto($1, "_", "_");
+
+        sprintf(op1, "[%d]", Aind);
+        sprintf(op2, "[%d]", Eind);
+
+        crearTerceto($2, op1, op2);
+    }
     { fprintf(pparser, "20) asignacion -> ID := expresion\n"); }
     ;
 
 asignacion:
 	ID OP_ASIG CONST_STRING
+    {
+        char op[MAX_LONG_STR];
+        char op1[10];
+        char op2[10];
+
+        sprintf(op, "%s", $3);
+
+        Strind = crearTerceto(op, "_", "_");
+        Aind = crearTerceto($1, "_", "_");
+
+        sprintf(op1, "[%d]", Aind);
+        sprintf(op2, "[%d]", Strind);
+
+        crearTerceto($2, op1, op2);
+    }
     { fprintf(pparser, "21) asignacion -> ID := CONST_STRING\n"); }
     ;
 
@@ -316,7 +349,7 @@ condicion:
     ;
 
 expresion:
-    expresion OP_SUMA termino
+    expresion { apilar(Epila, Eind); } OP_SUMA termino { Eind = desapilar(Epila); }
     {
         char op1[10];
         char op2[10];
@@ -324,14 +357,13 @@ expresion:
         sprintf(op1, "[%d]", Eind);
         sprintf(op2, "[%d]", Tind);
 
-        
-        Eind = crearTerceto($2, op1, op2);
+        Eind = crearTerceto($3, op1, op2);
     }
     { fprintf(pparser, "45) expresion -> expresion + termino\n"); }
     ;
 
 expresion:
-    expresion OP_RESTA termino
+    expresion { apilar(Epila, Eind); } OP_RESTA termino { Eind = desapilar(Epila); }
     {
         char op1[10];
         char op2[10];
@@ -339,7 +371,7 @@ expresion:
         sprintf(op1, "[%d]", Eind);
         sprintf(op2, "[%d]", Tind);
 
-        Eind = crearTerceto($2, op1, op2); 
+        Eind = crearTerceto($3, op1, op2); 
     }
     { fprintf(pparser, "46) expresion -> expresion - termino\n"); }
     ;
@@ -351,7 +383,7 @@ expresion:
     ;
 
 termino:
-    termino OP_PRODUCTO factor
+    termino { apilar(Tpila, Tind); } OP_PRODUCTO factor { Tind = desapilar(Tpila); }
     {
         char op1[10];
         char op2[10];
@@ -359,13 +391,13 @@ termino:
         sprintf(op1, "[%d]", Tind);
         sprintf(op2, "[%d]", Find);
 
-        Tind = crearTerceto($2, op1, op2); 
+        Tind = crearTerceto($3, op1, op2); 
     }
     { fprintf(pparser, "48) termino -> termino * factor\n"); }
     ;
 
 termino:
-    termino OP_COCIENTE factor
+    termino { apilar(Tpila, Tind); } OP_COCIENTE factor { Tind = desapilar(Tpila); }
     {
         char op1[10];
         char op2[10];
@@ -373,7 +405,7 @@ termino:
         sprintf(op1, "[%d]", Tind);
         sprintf(op2, "[%d]", Find);
 
-        Tind = crearTerceto($2, op1, op2); 
+        Tind = crearTerceto($3, op1, op2); 
     }
     { fprintf(pparser, "49) termino -> termino / factor\n"); }
     ;
