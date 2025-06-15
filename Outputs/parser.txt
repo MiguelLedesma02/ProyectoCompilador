@@ -5,16 +5,28 @@
 2) variables -> INIT { declaraciones }
 52) factor -> CONST_INT
 50) termino -> factor
-52) factor -> CONST_INT
-50) termino -> factor
-47) expresion -> termino
-52) factor -> CONST_INT
-50) termino -> factor
-46) expresion -> expresion - termino
-54) factor -> ( expresion )
-48) termino -> termino * factor
 47) expresion -> termino
 20) asignacion -> ID := expresion
 13) sentencia -> asignacion
 12) bloque -> sentencia
+51) factor -> ID
+50) termino -> factor
+47) expresion -> termino
+52) factor -> CONST_INT
+50) termino -> factor
+47) expresion -> termino
+39) condicion -> expresion > expresion
+32) condiciones -> condicion
+51) factor -> ID
+50) termino -> factor
+47) expresion -> termino
+52) factor -> CONST_INT
+50) termino -> factor
+45) expresion -> expresion + termino
+20) asignacion -> ID := expresion
+13) sentencia -> asignacion
+12) bloque -> sentencia
+22) iteracion -> WHILE ( condiciones ) { bloque }
+14) sentencia -> iteracion
+11) bloque -> bloque sentencia
 1) programa -> variables bloque

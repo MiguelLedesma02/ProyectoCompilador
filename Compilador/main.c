@@ -14,6 +14,7 @@ FILE *pst = NULL;
 
 Pila* Epila;
 Pila* Tpila;
+Pila* Bpila;
 
 
 int main (int argc, char* argv[])
@@ -37,6 +38,7 @@ int main (int argc, char* argv[])
 
     Epila = crearPila();
     Tpila = crearPila();
+    Bpila = crearPila();
 
     printf("INICIO DE LA COMPILACION\n");
     printf("\n. . .\n");
@@ -61,6 +63,7 @@ int main (int argc, char* argv[])
 
     destruirPila(Epila);
     destruirPila(Tpila);
+    destruirPila(Bpila);
 
     return 0;
 }

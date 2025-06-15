@@ -9,6 +9,9 @@ extern FILE *pparser;
 
 extern Pila* Epila;
 extern Pila* Tpila;
+extern Pila* Bpila;
+
+extern int indiceTerceto;
 
 /*INDICES*/
 
@@ -77,12 +80,12 @@ int yyerror(char* descripcion);
 
 /*OPERADORES LÓGICOS*/
 
-%token OP_MAYOR
-%token OP_MAYOR_IGUAL
-%token OP_MENOR
-%token OP_MENOR_IGUAL
-%token OP_IGUAL
-%token OP_DISTINTO
+%token <texto> OP_MAYOR
+%token <texto> OP_MAYOR_IGUAL
+%token <texto> OP_MENOR
+%token <texto> OP_MENOR_IGUAL
+%token <texto> OP_IGUAL
+%token <texto> OP_DISTINTO
 
 /*BLOQUES*/
 
@@ -234,7 +237,24 @@ asignacion:
     ;
 
 iteracion:
-	WHILE PAR_AP condiciones PAR_CL LLA_AP bloque LLA_CL
+	WHILE { apilar(Bpila, indiceTerceto); } PAR_AP condiciones PAR_CL LLA_AP bloque LLA_CL
+    {
+        int inicioWhile;
+        int finWhile;
+        int condicion;
+        char op[10];
+
+        //TODO: Revisar por qué no completa bien el terceto.
+
+        inicioWhile = desapilar(Bpila);
+        condicion = desapilar(Bpila);
+
+        sprintf(op, "[%d]", inicioWhile);
+        finWhile = crearTerceto("BI", op, "_");
+
+        sprintf(op, "[%d]", condicion);
+        completarTerceto(finWhile, op);
+    }
     { fprintf(pparser, "22) iteracion -> WHILE ( condiciones ) { bloque }\n"); }
     ;
 
@@ -319,7 +339,23 @@ condiciones:
     ;
 
 condicion:
-    expresion OP_MAYOR expresion
+    expresion { apilar(Bpila, Eind); } OP_MAYOR expresion
+    {
+        int parteIzq;
+        int parteDer;
+
+        parteIzq = desapilar(Bpila);
+        parteDer = Eind;
+        
+        char op1[10];
+        char op2[10];
+
+        sprintf(op1, "[%d]", parteIzq);
+        sprintf(op2, "[%d]", parteDer);
+
+        crearTerceto("CMP", op1, op2);
+        apilar(Bpila, crearTerceto("BLE", "_", "_"));
+    }
     { fprintf(pparser, "39) condicion -> expresion > expresion\n"); }
     ;
 
