@@ -1,9 +1,6 @@
 init
 {
-    x, y, z: int
-    var1, var2 : string
+    a : int
 }
 
-a := (x + 5) / 3
-
-var1 := "ANALISIS LEXICO"
+a := 5 + 3 * 2 - 10

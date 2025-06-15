@@ -106,10 +106,26 @@ DOBLE_DOS_PUNTOS    "::"
 {REORDER}           { fprintf(plexer, "REORDER: %s\n", yytext); return REORDER; }
 {SUMFIRSTPRIMES}    { fprintf(plexer, "SUMFIRSTPRIMES: %s\n", yytext); return SUMFIRSTPRIMES; }
 
-{OP_SUMA}           { fprintf(plexer, "OP_SUMA: %s\n", yytext); return OP_SUMA; }
-{OP_RESTA}          { fprintf(plexer, "OP_RESTA: %s\n", yytext); return OP_RESTA; }
-{OP_PRODUCTO}       { fprintf(plexer, "OP_PRODUCTO: %s\n", yytext); return OP_PRODUCTO; }
-{OP_COCIENTE}       { fprintf(plexer, "OP_COCIENTE: %s\n", yytext); return OP_COCIENTE; }
+{OP_SUMA}           {
+                        fprintf(plexer, "OP_SUMA: %s\n", yytext);
+                        yylval.texto = strdup(yytext);
+                        return OP_SUMA;
+                    }
+{OP_RESTA}          {
+                        fprintf(plexer, "OP_RESTA: %s\n", yytext);
+                        yylval.texto = strdup(yytext);
+                        return OP_RESTA;
+                    }
+{OP_PRODUCTO}       {
+                        fprintf(plexer, "OP_PRODUCTO: %s\n", yytext); 
+                        yylval.texto = strdup(yytext);
+                        return OP_PRODUCTO;
+                    }
+{OP_COCIENTE}       {
+                        fprintf(plexer, "OP_COCIENTE: %s\n", yytext);
+                        yylval.texto = strdup(yytext);
+                        return OP_COCIENTE; 
+                    }
 
 {OP_MAYOR}          { fprintf(plexer, "OP_MAYOR: %s\n", yytext); return OP_MAYOR; }
 {OP_MAYOR_IGUAL}    { fprintf(plexer, "OP_MAYOR_IGUAL: %s\n", yytext); return OP_MAYOR_IGUAL; }
@@ -135,7 +151,7 @@ DOBLE_DOS_PUNTOS    "::"
                         {
                             fprintf(plexer, "ID: %s\n", yytext);
                             agregarToken(pst, yytext, NULL);
-                            //yylval.strVal = strdup(yytext);
+                            yylval.texto = strdup(yytext);
                             return ID;
                         }
                         else
@@ -148,6 +164,7 @@ DOBLE_DOS_PUNTOS    "::"
                         { 
                             fprintf(plexer, "CONST_INT: %s\n", yytext);
                             agregarToken(pst, yytext, "CTE_INTEGER");
+                            yylval.texto = strdup(yytext);
                             return CONST_INT;
                         }
                         else
@@ -160,6 +177,7 @@ DOBLE_DOS_PUNTOS    "::"
                         {
                             fprintf(plexer, "CONST_FLOAT: %s\n", yytext);
                             agregarToken(pst, yytext, "CTE_FLOAT");
+                            yylval.texto = strdup(yytext);
                             return CONST_FLOAT;
                         }
                         else
@@ -172,6 +190,7 @@ DOBLE_DOS_PUNTOS    "::"
                         {
                             fprintf(plexer, "CONST_STRING: %s\n", yytext);
                             agregarToken(pst, yytext, "CTE_STRING");
+                            yylval.texto = strdup(yytext);
                             return CONST_STRING;
                         }
                         else

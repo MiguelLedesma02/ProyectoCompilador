@@ -1,15 +1,27 @@
 %{
 #include "../Utilitarios/Utilitarios.h"
+#include "../Tercetos/Tercetos.h"
 
 /*VARIABLES GLOBALES*/
 extern int yylineno;
 extern FILE *pparser;
+
+/*INDICES*/
+
+int Eind;
+int Tind;
+int Find;
 
 /*FUNCIONES DEL SINTÁCTICO*/
 int yylex();
 int yyerror(char* descripcion);
 
 %}
+
+%union
+{
+    char* texto;
+}
 
 /*TIPOS DE DATOS*/
 
@@ -43,18 +55,18 @@ int yyerror(char* descripcion);
 
 /*TOKENS BÁSICOS*/
 
-%token ID
-%token CONST_INT
-%token CONST_FLOAT
-%token CONST_STRING
+%token <texto> ID
+%token <texto> CONST_INT
+%token <texto> CONST_FLOAT
+%token <texto> CONST_STRING
 %token OP_ASIG
 
 /*OPERADORES ARITMÉTICOS*/
 
-%token OP_SUMA
-%token OP_RESTA
-%token OP_PRODUCTO
-%token OP_COCIENTE
+%token <texto> OP_SUMA
+%token <texto> OP_RESTA
+%token <texto> OP_PRODUCTO
+%token <texto> OP_COCIENTE
 
 /*OPERADORES LÓGICOS*/
 
@@ -305,51 +317,94 @@ condicion:
 
 expresion:
     expresion OP_SUMA termino
+    {
+        char op1[10];
+        char op2[10];
+
+        sprintf(op1, "[%d]", Eind);
+        sprintf(op2, "[%d]", Tind);
+
+        
+        Eind = crearTerceto($2, op1, op2);
+    }
     { fprintf(pparser, "45) expresion -> expresion + termino\n"); }
     ;
 
 expresion:
     expresion OP_RESTA termino
+    {
+        char op1[10];
+        char op2[10];
+
+        sprintf(op1, "[%d]", Eind);
+        sprintf(op2, "[%d]", Tind);
+
+        Eind = crearTerceto($2, op1, op2); 
+    }
     { fprintf(pparser, "46) expresion -> expresion - termino\n"); }
     ;
 
 expresion:
     termino
+    { Eind = Tind; }
     { fprintf(pparser, "47) expresion -> termino\n"); }
     ;
 
 termino:
     termino OP_PRODUCTO factor
+    {
+        char op1[10];
+        char op2[10];
+
+        sprintf(op1, "[%d]", Tind);
+        sprintf(op2, "[%d]", Find);
+
+        Tind = crearTerceto($2, op1, op2); 
+    }
     { fprintf(pparser, "48) termino -> termino * factor\n"); }
     ;
 
 termino:
     termino OP_COCIENTE factor
+    {
+        char op1[10];
+        char op2[10];
+
+        sprintf(op1, "[%d]", Tind);
+        sprintf(op2, "[%d]", Find);
+
+        Tind = crearTerceto($2, op1, op2); 
+    }
     { fprintf(pparser, "49) termino -> termino / factor\n"); }
     ;
 
 termino:
     factor
+    { Tind = Find; }
     { fprintf(pparser, "50) termino -> factor\n"); }
     ;
 
 factor:
     ID
+    { Find = crearTerceto($1, "_", "_"); }
     { fprintf(pparser, "51) factor -> ID\n"); }
     ;
 
 factor:
     CONST_INT
+    { Find = crearTerceto($1, "_", "_"); }
     { fprintf(pparser, "52) factor -> CONST_INT\n"); }
     ;
 
 factor:
     CONST_FLOAT
+    { Find = crearTerceto($1, "_", "_"); }
     { fprintf(pparser, "53) factor -> CONST_FLOAT\n"); }
     ;
 
 factor:
     PAR_AP expresion PAR_CL
+    { Find = Eind; }
     { fprintf(pparser, "54) factor -> ( expresion )\n"); }
     ;
 

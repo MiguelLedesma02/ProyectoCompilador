@@ -22,5 +22,5 @@ Descargue los instaladores para Windows de las siguientes páginas:
 
 ## Ejecución  
 
-Ejecutar el archivo lyc-compiler-1.0.0.bat
+Ejecutar el archivo lyc-compiler-2.0.0.bat
 

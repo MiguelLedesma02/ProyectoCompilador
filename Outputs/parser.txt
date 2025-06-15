@@ -1,0 +1,20 @@
+10) lista_var -> ID
+6) t_dato -> INT
+5) declaracion -> lista_var : t_dato
+4) declaraciones -> declaracion
+2) variables -> INIT { declaraciones }
+52) factor -> CONST_INT
+50) termino -> factor
+47) expresion -> termino
+52) factor -> CONST_INT
+50) termino -> factor
+52) factor -> CONST_INT
+48) termino -> termino * factor
+45) expresion -> expresion + termino
+52) factor -> CONST_INT
+50) termino -> factor
+46) expresion -> expresion - termino
+20) asignacion -> ID := expresion
+13) sentencia -> asignacion
+12) bloque -> sentencia
+1) programa -> variables bloque
