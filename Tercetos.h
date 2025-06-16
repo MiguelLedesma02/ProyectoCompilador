@@ -13,7 +13,7 @@ typedef struct {
 } Terceto;
 
 // Arreglo para almacenar los tercetos
-Terceto tercetos[MAX_TERCETOS];
+extern Terceto tercetos[MAX_TERCETOS];
 
 int tercetosApilados[20];
 int indiceTercetoApiladoActual = 0;
@@ -89,10 +89,16 @@ void generar_assembler(tLista* listaSimbolos){
     fprintf(archivo, ".DATA\n");
     imprimirDataAsm(listaSimbolos, archivo);
 
-    fprintf(archivo, ".CODE\n");
+    generarDataAsm(archivo, listaSimbolos);
 
+    fprintf(archivo, ".CODE\n");
+    fprintf(archivo, "START:\n");
+    fprintf(archivo, "mov AX, DGROUP    ; Inicializa el segmento de datos\n");
+    fprintf(archivo, "mov DS, AX\n");
+    fprintf(archivo, "mov ES, AX\n\n");
     // escribir una funcion que vaya leyecndo todos los tercetos 
-	
+	generarCodigoDesdeTercetos(archivo);
+
     fprintf(archivo, ".MOV EAX, 4C00h\n");
     fprintf(archivo, "INT 21h\n");
     fprintf(archivo, "END;\n");

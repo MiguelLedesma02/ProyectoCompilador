@@ -138,7 +138,7 @@ void reorder(char* lista[], int izq, int pivot, int tam);
 %%
 
 programa:
-	{printf("\nINICIO DEL PROGRAMA\n");} variables bloque {printf("FIN DEL PROGRAMA\n");}
+	{printf("\nINICIO DEL PROGRAMA\n");} variables bloque {printf("FIN DEL PROGRAMA\n"); generar_assembler(&listaSimbolos);}
 	;
 
 variables:
