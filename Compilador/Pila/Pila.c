@@ -14,9 +14,9 @@ Pila* crearPila()
 int pilaVacia(Pila* pila)
 {
     if(pila->tope == NULL)
-        return 0;
+        return 1;
 
-    return 1;
+    return 0;
 }
 
 void apilar(Pila* pila, int elemento)

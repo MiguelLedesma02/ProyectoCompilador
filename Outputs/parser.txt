@@ -3,6 +3,18 @@
 6) t_dato -> INT
 5) declaracion -> lista_var : t_dato
 4) declaraciones -> declaracion
+10) lista_var -> ID
+9) lista_var -> lista_var , ID
+9) lista_var -> lista_var , ID
+7) t_dato -> STRING
+5) declaracion -> lista_var : t_dato
+3) declaraciones -> declaraciones declaracion
+10) lista_var -> ID
+9) lista_var -> lista_var , ID
+9) lista_var -> lista_var , ID
+8) t_dato -> FLOAT
+5) declaracion -> lista_var : t_dato
+3) declaraciones -> declaraciones declaracion
 2) variables -> INIT { declaraciones }
 52) factor -> CONST_INT
 50) termino -> factor
@@ -13,41 +25,7 @@
 51) factor -> ID
 50) termino -> factor
 47) expresion -> termino
-52) factor -> CONST_INT
-50) termino -> factor
-47) expresion -> termino
-42) condicion -> expresion <= expresion
-33) condiciones -> NOT condicion
-51) factor -> ID
-50) termino -> factor
-47) expresion -> termino
-52) factor -> CONST_INT
-50) termino -> factor
-45) expresion -> expresion + termino
 20) asignacion -> ID := expresion
 13) sentencia -> asignacion
-12) bloque -> sentencia
-51) factor -> ID
-50) termino -> factor
-47) expresion -> termino
-52) factor -> CONST_INT
-50) termino -> factor
-47) expresion -> termino
-43) condicion -> expresion == expresion
-32) condiciones -> condicion
-51) factor -> ID
-50) termino -> factor
-47) expresion -> termino
-52) factor -> CONST_INT
-50) termino -> factor
-45) expresion -> expresion + termino
-20) asignacion -> ID := expresion
-13) sentencia -> asignacion
-12) bloque -> sentencia
-22) iteracion -> WHILE ( condiciones ) { bloque }
-14) sentencia -> iteracion
-11) bloque -> bloque sentencia
-22) iteracion -> WHILE ( condiciones ) { bloque }
-14) sentencia -> iteracion
 11) bloque -> bloque sentencia
 1) programa -> variables bloque

@@ -89,10 +89,21 @@ DOBLE_DOS_PUNTOS    "::"
 
 %%
 
-{INT}               { fprintf(plexer, "INT: %s\n", yytext); return INT; }
-{FLOAT}             { fprintf(plexer, "FLOAT: %s\n", yytext); return FLOAT; }
-{STRING}            { fprintf(plexer, "STRING: %s\n", yytext); return STRING; }
-
+{INT}               {
+                        fprintf(plexer, "INT: %s\n", yytext);
+                        yylval.texto = strdup(yytext);
+                        return INT;
+                    }
+{FLOAT}             {
+                        fprintf(plexer, "FLOAT: %s\n", yytext);
+                        yylval.texto = strdup(yytext);
+                        return FLOAT;
+                    }
+{STRING}            {
+                        fprintf(plexer, "STRING: %s\n", yytext);
+                        yylval.texto = strdup(yytext);
+                        return STRING;
+                    }
 {AND}               { fprintf(plexer, "AND: %s\n", yytext); return AND; }
 {OR}                { fprintf(plexer, "OR: %s\n", yytext); return OR; }
 {NOT}               { fprintf(plexer, "NOT: %s\n", yytext); return NOT; }

@@ -2,6 +2,48 @@
 
 /*FUNCIONES SEMÁNTICAS*/
 
+int setTipoDato(FILE *pf, FILE *ptemp, char* tipoDato)
+{
+    if(strcmp(tipoDato, "int") == 0)
+        strcpy(tipoDato, "CTE_INTEGER");
+
+    else if(strcmp(tipoDato, "float") == 0)
+        strcpy(tipoDato, "CTE_FLOAT");
+
+    else if(strcmp(tipoDato, "string") == 0)
+        strcpy(tipoDato, "CTE_STRING");
+
+    for(int i = 0; i < cantVarEnLinea; i ++)
+    {
+        entrada_ts aux;
+
+        aux = buscarToken(pf, varEnLinea[i]);
+        
+        if(strcmp(aux.nombre, "NO ENCONTRADA") == 0)
+            return 0;
+
+        strcpy(aux.tipoDato, tipoDato);
+
+        modificarToken(pf, ptemp, aux);
+
+        fclose(ptemp);
+        fclose(pf);
+
+        remove("./Outputs/symbol_table.txt");
+        rename("temp.txt", "./Outputs/symbol_table.txt");
+
+        if(abrirArchivo(&pf, "./Outputs/symbol_table.txt", "r+t") == 1)
+            return 0;
+
+        if(abrirArchivo(&ptemp, "temp.txt", "wt") == 1)
+            return 0;
+    }
+
+    cantVarEnLinea = 0;
+
+    return 1;
+}
+
 int generarCondicion(char* condicion)
 {
     /*condicion es el salto que debe realizar*/

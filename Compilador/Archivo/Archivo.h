@@ -3,18 +3,10 @@
 
 #include "../Utilitarios/Utilitarios.h"
 
-/*ESTRUCTURAS*/
-typedef struct
-{
-    char nombre[MAX_LONG_ID];
-    char tipoDato[MAX_LONG_TD];
-    char valor[MAX_LONG_STR];
-    unsigned longitud;
-} entrada_ts;
-
 /*FUNCIONES*/
 int abrirArchivo(FILE** pf, char* nombreArchivo, char* modo);
-int buscarToken(FILE* pf, char* tk);
+entrada_ts buscarToken(FILE* pf, char* tk);
 void agregarToken(FILE* pf, char* tk, char* tipo);
+void modificarToken(FILE* pf, FILE* ptemp, entrada_ts nuevaEntrada);
 
 #endif

@@ -5,6 +5,10 @@
 /*VARIABLES GLOBALES*/
 extern int yylineno;
 extern FILE *pparser;
+extern FILE *pst;
+extern FILE *ptemp;
+
+int cantVarEnLinea = 0;
 
 /*FUNCIONES DEL SINTÁCTICO*/
 int yylex();
@@ -19,9 +23,9 @@ int yyerror(char* descripcion);
 
 /*TIPOS DE DATOS*/
 
-%token INT
-%token FLOAT
-%token STRING
+%token <texto> INT
+%token <texto> FLOAT
+%token <texto> STRING
 
 /*CONECTORES LÓGICOS*/
 
@@ -111,31 +115,47 @@ declaraciones:
 
 declaracion:
 	lista_var DOS_PUNTOS t_dato
+    {
+        if(setTipoDato(pst, ptemp, tipoDato) == 0)
+            yyerror("No se encontro la variable en la Tabla de Simbolos.");
+        
+    }
     { fprintf(pparser, "5) declaracion -> lista_var : t_dato\n"); }
 	;
 
 t_dato:
-	INT
+	INT { strcpy(tipoDato, $1); }
     { fprintf(pparser, "6) t_dato -> INT\n"); }
     ;
 
 t_dato:
-	STRING
-    { fprintf(pparser, "7) t_dato -> STRING\n"); }
+	FLOAT { strcpy(tipoDato, $1); }
+    { fprintf(pparser, "8) t_dato -> FLOAT\n"); }
     ;
 
 t_dato:
-	FLOAT
-    { fprintf(pparser, "8) t_dato -> FLOAT\n"); }
+	STRING { strcpy(tipoDato, $1); }
+    { fprintf(pparser, "7) t_dato -> STRING\n"); }
     ;
 
 lista_var:
 	lista_var COMA ID
+    { 
+        if(cantVarEnLinea >= MAX_VAR_EN_LINEA)
+            yyerror("Se ha excedido de la cantidad de variables que pueden declararse en una linea.");
+
+        strcpy(varEnLinea[cantVarEnLinea], $3);
+        cantVarEnLinea ++;
+    }
     { fprintf(pparser, "9) lista_var -> lista_var , ID\n"); }
 	;
 
 lista_var:
-	ID
+    ID
+	{ 
+        strcpy(varEnLinea[cantVarEnLinea], $1);
+        cantVarEnLinea ++;
+    }
     { fprintf(pparser, "10) lista_var -> ID\n"); }
 	;
 
@@ -449,7 +469,7 @@ int yyerror(char* descripcion)
     /* descripcion es el error sintáctico */
 
     printf("\n");
-    printf("ERROR SINTACTICO\n");
+    printf("ERROR: %s\n", descripcion);
     printf("LINEA: %d\n", yylineno);
     printf("\n");
 

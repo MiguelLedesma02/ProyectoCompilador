@@ -11,10 +11,12 @@ FILE *plexer = NULL;
 FILE *pparser = NULL;
 FILE *ptercetos = NULL;
 FILE *pst = NULL;
+FILE *ptemp = NULL;
 
 Pila* Epila;
 Pila* Tpila;
 Pila* Bpila;
+Pila* Vpila;
 
 
 int main (int argc, char* argv[])
@@ -36,9 +38,13 @@ int main (int argc, char* argv[])
     if(abrirArchivo(&pst, nombreArchivo, "w+t") == 1)
         return 1;
 
+    if(abrirArchivo(&ptemp, "temp.txt", "wt") == 1)
+        return 1;
+
     Epila = crearPila();
     Tpila = crearPila();
     Bpila = crearPila();
+    Vpila = crearPila();
 
     printf("INICIO DE LA COMPILACION\n");
     printf("\n. . .\n");
@@ -60,10 +66,14 @@ int main (int argc, char* argv[])
     fclose(pparser);
     fclose(ptercetos);
     fclose(pst);
+    fclose(ptemp);
+
+    remove("temp.txt");
 
     destruirPila(Epila);
     destruirPila(Tpila);
     destruirPila(Bpila);
+    destruirPila(Vpila);
 
     return 0;
 }
