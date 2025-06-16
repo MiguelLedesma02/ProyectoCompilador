@@ -1,3 +1,4 @@
 a                                                 |-              |-                                                 |         1
+b                                                 |-              |-                                                 |         1
 0                                                 |CTE_INTEGER    |0                                                 |         1
 5                                                 |CTE_INTEGER    |5                                                 |         1

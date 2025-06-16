@@ -1,11 +1,15 @@
 init
 {
-    a : int
+    a, b : int
 }
 
 a := 0
 
-while( a > 5 )
+while( NOT a <= 5 )
 {
     a := a + 1
+    while( b == 5 )
+    {
+        a := a + 1
+    }
 }

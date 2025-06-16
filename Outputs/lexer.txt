@@ -1,6 +1,8 @@
 INIT: init
 LLA_AP: {
 ID: a
+COMA: ,
+ID: b
 DOS_PUNTOS: :
 INT: int
 LLA_CL: }
@@ -9,8 +11,9 @@ OP_ASIG: :=
 CONST_INT: 0
 WHILE: while
 PAR_AP: (
+NOT: NOT
 ID: a
-OP_MAYOR: >
+OP_MENOR_IGUAL: <=
 CONST_INT: 5
 PAR_CL: )
 LLA_AP: {
@@ -19,4 +22,17 @@ OP_ASIG: :=
 ID: a
 OP_SUMA: +
 CONST_INT: 1
+WHILE: while
+PAR_AP: (
+ID: b
+OP_IGUAL: ==
+CONST_INT: 5
+PAR_CL: )
+LLA_AP: {
+ID: a
+OP_ASIG: :=
+ID: a
+OP_SUMA: +
+CONST_INT: 1
+LLA_CL: }
 LLA_CL: }

@@ -23,6 +23,8 @@ extern int indiceTerceto;
 
 int crearTerceto(char* operador, char* op1, char* op2);
 void completarTerceto(int indice, char* op);
+char* verOperadorTerceto(int indice);
+void modificarOperadorTerceto(int indice, char* op);
 void imprimirTercetos();
 
 #endif

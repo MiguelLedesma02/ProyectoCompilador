@@ -11,8 +11,8 @@ set SRC_UTILITARIOS=./Compilador/Utilitarios
 set INPUTS=./Inputs/test.txt
 set OUTPUTS=./Outputs/lexer.txt ./Outputs/parser.txt ./Outputs/intermediate-code.txt
 
-set INCLUDES=-I%SRC_LEXICO% -I%SRC_TERCETOS% -I%SRC_PILA% -I%SRC_ARCHIVO% -I%SRC_UTILITARIOS%
-set SOURCES=%SRC_LEXICO%/Lexico.c %SRC_TERCETOS%/Tercetos.c %SRC_PILA%/Pila.c %SRC_ARCHIVO%/Archivo.c %SRC_UTILITARIOS%/Utilitarios.c
+set INCLUDES=-I%SRC_LEXICO% -I%SRC_SINTACTICO% -I%SRC_TERCETOS% -I%SRC_PILA% -I%SRC_ARCHIVO% -I%SRC_UTILITARIOS%
+set SOURCES=%SRC_LEXICO%/Lexico.c %SRC_SINTACTICO%/Sintactico.c %SRC_TERCETOS%/Tercetos.c %SRC_PILA%/Pila.c %SRC_ARCHIVO%/Archivo.c %SRC_UTILITARIOS%/Utilitarios.c
 set COMPILADOR=lex.yy.c %SRC_SINTACTICO%/y.tab.c ./Compilador/main.c
 
 flex %SRC_LEXICO%/Lexico.l

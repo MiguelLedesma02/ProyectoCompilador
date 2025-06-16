@@ -20,11 +20,28 @@ int crearTerceto(char* operador, char* op1, char* op2)
 void completarTerceto(int indice, char* op)
 {
     /* Esto se usa para completar los saltos */
-    /* op1 es el único operando */
+    /* indice indica el terceto */
+    /* op es el único operando */
 
     strcpy(tercetos[indice].operando1, op);
 
     return;
+}
+
+char* verOperadorTerceto(int indice)
+{
+    /* indice indica el terceto */
+
+    return tercetos[indice].operador;
+}
+
+void modificarOperadorTerceto(int indice, char* op)
+{
+    /* Esto se usa para negar la condición de salto */
+    /* indice indica el terceto */
+    /* op es el salto */
+
+    strcpy(tercetos[indice].operador, op);
 }
 
 void imprimirTercetos()

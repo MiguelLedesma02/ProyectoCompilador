@@ -1,26 +1,10 @@
 %{
-#include "../Utilitarios/Utilitarios.h"
-#include "../Tercetos/Tercetos.h"
-#include "../Pila/Pila.h"
+
+#include "Sintactico.h"
 
 /*VARIABLES GLOBALES*/
 extern int yylineno;
 extern FILE *pparser;
-
-extern Pila* Epila;
-extern Pila* Tpila;
-extern Pila* Bpila;
-
-extern int indiceTerceto;
-
-/*INDICES*/
-
-int Strind;
-
-int Aind;
-int Eind;
-int Tind;
-int Find;
 
 /*FUNCIONES DEL SINTÁCTICO*/
 int yylex();
@@ -241,19 +225,17 @@ iteracion:
     {
         int inicioWhile;
         int finWhile;
-        int condicion;
+        int salto;
         char op[10];
 
-        //TODO: Revisar por qué no completa bien el terceto.
-
+        salto = desapilar(Bpila);
         inicioWhile = desapilar(Bpila);
-        condicion = desapilar(Bpila);
 
         sprintf(op, "[%d]", inicioWhile);
         finWhile = crearTerceto("BI", op, "_");
 
-        sprintf(op, "[%d]", condicion);
-        completarTerceto(finWhile, op);
+        sprintf(op, "[%d]", finWhile + 1);
+        completarTerceto(salto, op);
     }
     { fprintf(pparser, "22) iteracion -> WHILE ( condiciones ) { bloque }\n"); }
     ;
@@ -309,7 +291,7 @@ condiciones:
     ;
 
 condiciones:
-    NOT condicion
+    NOT condicion { negarCondicion(Cind); }
     { fprintf(pparser, "33) condiciones -> NOT condicion\n"); }
     ;
 
@@ -339,48 +321,32 @@ condiciones:
     ;
 
 condicion:
-    expresion { apilar(Bpila, Eind); } OP_MAYOR expresion
-    {
-        int parteIzq;
-        int parteDer;
-
-        parteIzq = desapilar(Bpila);
-        parteDer = Eind;
-        
-        char op1[10];
-        char op2[10];
-
-        sprintf(op1, "[%d]", parteIzq);
-        sprintf(op2, "[%d]", parteDer);
-
-        crearTerceto("CMP", op1, op2);
-        apilar(Bpila, crearTerceto("BLE", "_", "_"));
-    }
+    expresion { apilar(Bpila, Eind); } OP_MAYOR expresion { Cind = generarCondicion("BLE"); }
     { fprintf(pparser, "39) condicion -> expresion > expresion\n"); }
     ;
 
 condicion:
-    expresion OP_MAYOR_IGUAL expresion
+    expresion { apilar(Bpila, Eind); } OP_MAYOR_IGUAL expresion { Cind = generarCondicion("BLT"); }
     { fprintf(pparser, "40) condicion -> expresion >= expresion\n"); }
     ;
 
 condicion:
-    expresion OP_MENOR expresion
+    expresion { apilar(Bpila, Eind); } OP_MENOR expresion { Cind = generarCondicion("BGE"); }
     { fprintf(pparser, "41) condicion -> expresion < expresion\n"); }
     ;
 
 condicion:
-    expresion OP_MENOR_IGUAL expresion
+    expresion { apilar(Bpila, Eind); } OP_MENOR_IGUAL expresion { Cind = generarCondicion("BGT"); }
     { fprintf(pparser, "42) condicion -> expresion <= expresion\n"); }
     ;
 
 condicion:
-    expresion OP_IGUAL expresion
+    expresion { apilar(Bpila, Eind); } OP_IGUAL expresion { Cind = generarCondicion("BNE"); }
     { fprintf(pparser, "43) condicion -> expresion == expresion\n"); }
     ;
 
 condicion:
-    expresion OP_DISTINTO expresion
+    expresion { apilar(Bpila, Eind); } OP_DISTINTO expresion { Cind = generarCondicion("BEQ"); }
     { fprintf(pparser, "44) condicion -> expresion != expresion\n"); }
     ;
 
