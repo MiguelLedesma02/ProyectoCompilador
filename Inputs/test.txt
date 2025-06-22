@@ -5,6 +5,6 @@ init
     x, y, z : float
 }
 
-a := 0
+write(var1)
 
-var1 := var2
+write("Hola Mundo!")

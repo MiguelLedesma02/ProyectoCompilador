@@ -35,5 +35,11 @@ int Cind; //Condición
 int setTipoDato(FILE *pf, FILE *ptemp, char* tipoDato);
 int generarCondicion(char* condicion);
 void negarCondicion(int indice);
+void generarWhile();
+void generarIf();
+void generarInicioIfElse();
+void generarFinIfElse();
+void generarRead(char* id);
+void generarWrite(char* str, int string);
 
 #endif

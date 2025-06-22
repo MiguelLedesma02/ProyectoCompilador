@@ -241,47 +241,33 @@ asignacion:
     ;
 
 iteracion:
-	WHILE { apilar(Bpila, indiceTerceto); } PAR_AP condiciones PAR_CL LLA_AP bloque LLA_CL
-    {
-        int inicioWhile;
-        int finWhile;
-        int salto;
-        char op[10];
-
-        salto = desapilar(Bpila);
-        inicioWhile = desapilar(Bpila);
-
-        sprintf(op, "[%d]", inicioWhile);
-        finWhile = crearTerceto("BI", op, "_");
-
-        sprintf(op, "[%d]", finWhile + 1);
-        completarTerceto(salto, op);
-    }
+	WHILE { apilar(Bpila, indiceTerceto); } PAR_AP condiciones PAR_CL LLA_AP bloque LLA_CL { generarWhile(); }
     { fprintf(pparser, "22) iteracion -> WHILE ( condiciones ) { bloque }\n"); }
     ;
 
 seleccion:
-	IF PAR_AP condiciones PAR_CL LLA_AP bloque LLA_CL
+	IF PAR_AP condiciones PAR_CL LLA_AP bloque LLA_CL { generarIf(); }
     { fprintf(pparser, "23) seleccion -> IF ( condiciones ) { bloque }\n"); }
     ;
 
 seleccion:
-	IF PAR_AP condiciones PAR_CL LLA_AP bloque LLA_CL ELSE LLA_AP bloque LLA_CL
+	IF PAR_AP condiciones PAR_CL LLA_AP bloque LLA_CL { generarInicioIfElse(); }
+    ELSE LLA_AP bloque LLA_CL { generarFinIfElse(); }
     { fprintf(pparser, "24) seleccion -> IF ( condiciones ) { bloque } ELSE { bloque } \n"); }
     ;
 
 read:
-	READ PAR_AP ID PAR_CL
+	READ PAR_AP ID PAR_CL { generarRead($3); }
     { fprintf(pparser, "25) read -> READ ( ID )\n") }
 	;
 
 write:
-	WRITE PAR_AP ID PAR_CL
+	WRITE PAR_AP ID PAR_CL { generarWrite($3, 0); }
     { fprintf(pparser, "26) write -> WRITE ( ID )\n") }
 	;
 
 write:
-	WRITE PAR_AP CONST_STRING PAR_CL
+	WRITE PAR_AP CONST_STRING PAR_CL { generarWrite($3, 1); }
     { fprintf(pparser, "27) write -> WRITE ( CONST_STRING )\n") }
 	;
 

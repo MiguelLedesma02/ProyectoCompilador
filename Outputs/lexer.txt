@@ -20,9 +20,11 @@ ID: z
 DOS_PUNTOS: :
 FLOAT: float
 LLA_CL: }
-ID: a
-OP_ASIG: :=
-CONST_INT: 0
+WRITE: write
+PAR_AP: (
 ID: var1
-OP_ASIG: :=
-ID: var2
+PAR_CL: )
+WRITE: write
+PAR_AP: (
+CONST_STRING: "Hola Mundo!"
+PAR_CL: )

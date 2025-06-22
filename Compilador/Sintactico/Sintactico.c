@@ -97,3 +97,100 @@ void negarCondicion(int indice)
 
     modificarOperadorTerceto(indice, condicion);
 }
+
+void generarWhile()
+{
+    int inicioWhile;
+    int finWhile;
+    int salto;
+    char op[10];
+
+    salto = desapilar(Bpila);
+    inicioWhile = desapilar(Bpila);
+
+    sprintf(op, "[%d]", inicioWhile);
+    finWhile = crearTerceto("BI", op, "_");
+
+    sprintf(op, "[%d]", finWhile + 1);
+    completarTerceto(salto, op);
+
+    return;
+}
+
+void generarIf()
+{
+    int salto;
+    int finIf;
+    char op[10];
+
+    salto = desapilar(Bpila);
+    finIf = indiceTerceto;
+
+    sprintf(op, "[%d]", finIf);
+    completarTerceto(salto, op);
+
+    return;
+}
+
+void generarInicioIfElse()
+{
+    int salto;
+    int finIf;
+    char op[10];
+
+    salto = desapilar(Bpila);
+    finIf = crearTerceto("BI", "_", "_");
+    apilar(Bpila, finIf);
+
+    sprintf(op, "[%d]", finIf + 1);
+    completarTerceto(salto, op);
+
+    return;
+}
+
+void generarFinIfElse()
+{
+    int salto;
+    int finElse;
+    char op[10];
+
+    salto = desapilar(Bpila);
+    finElse = indiceTerceto;
+
+    sprintf(op, "[%d]", finElse);
+    completarTerceto(salto, op);
+
+    return;
+}
+
+void generarRead(char* id)
+{
+    /* id es el id donde se almacenará la entrada*/
+
+    char op[10];
+
+    Eind = crearTerceto(id, "_", "_");
+
+    sprintf(op, "[%d]", Eind);
+
+    crearTerceto("READ", op, "_");
+}
+
+void generarWrite(char* str, int string)
+{
+    /* str es la cadena a imprimir*/
+    /* Si es string es 1, se agregan comillas, si es 0 no*/
+
+    char op[10];
+
+    if(string == 1)
+        sprintf(op, "\"%s\"", str);
+    else\
+        sprintf(op, "%s", str);
+
+    Eind = crearTerceto(op, "_", "_");
+
+    sprintf(op, "[%d]", Eind);
+
+    crearTerceto("WRITE", op, "_");
+}
