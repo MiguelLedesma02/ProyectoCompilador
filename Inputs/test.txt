@@ -1,18 +1,7 @@
 init
 {
-    a : int
+    x : int
 }
 
-if( a > 5 OR a < 10 AND a == 4)
-{
-    write(a)
-
-    a := 20
-}
-else
-{
-    write(a)
-
-    a := 40
-}
+reorder([x+3, 1+1, 9-x], 0, 0)
 

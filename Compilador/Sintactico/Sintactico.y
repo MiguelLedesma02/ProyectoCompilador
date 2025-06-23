@@ -10,6 +10,7 @@ extern FILE *ptemp;
 
 int cantVarEnLinea = 0;
 int cantVarDeclaradas = 0;
+int varAux = 0;
 
 /*FUNCIONES DEL SINTÁCTICO*/
 int yylex();
@@ -334,7 +335,7 @@ write:
 	;
 
 reorder:
-    REORDER PAR_AP COR_AP expresiones COR_CL COMA CONST_INT COMA CONST_INT PAR_CL
+    REORDER PAR_AP COR_AP expresiones COR_CL COMA CONST_INT COMA CONST_INT PAR_CL { reorder($7, $9); }
     { fprintf(pparser, "28) reorder -> REORDER ( [ expresiones ] , CONST_INT , CONST_INT )\n") }
     ;
 
@@ -343,17 +344,74 @@ sumfirstprimes:
     {
         if(buscarVar($1) == 0)
             yyerror("No puede usar una variable que no fue declarada previamente.");
+
+        char auxTD[MAX_LONG_TD];
+
+        getTipo(pst, $1, auxTD);
+
+        if(strcmp(auxTD, "CTE_INTEGER") != 0)
+            yyerror("No se pueden asignar el resultado de sumFirstPrimes a una variable no entera.");
+
+        char op[MAX_LONG_STR];
+
+        Strind = crearTerceto($5, "_", "_");
+
+        sprintf(op, "[%d]", Strind);
+        crearTerceto("SFP", op, "_");
+
+        int suma = sumarPrimos(atoi($5));
+
+        sprintf(op, "%d", suma);
+
+        Eind = crearTerceto(op, "_", "_");
+        Aind = crearTerceto($1, "_", "_");
+
+        char op1[MAX_LONG_STR];
+        char op2[MAX_LONG_STR];
+
+        sprintf(op1, "[%d]", Aind);
+        sprintf(op2, "[%d]", Eind);
+
+        crearTerceto(":=", op1, op2);
     }
     { fprintf(pparser, "29) sumfirstprimes -> ID := SUMFIRSTPRIMES ( CONST_INT )\n") }
 	;
 
 expresiones:
     expresiones COMA expresion
+    {
+        char aux[10];
+        char op1[10];
+        char op2[10];
+
+        sprintf(aux, "@aux%d", varAux);
+        varAux ++;
+
+        Aind = crearTerceto(aux, "_", "_");
+
+        sprintf(op1, "[%d]", Aind);
+        sprintf(op2, "[%d]", Eind);
+        crearTerceto(":=", op1, op2);
+    }
     { fprintf(pparser, "30) expresiones -> expresiones , expresion\n"); }
     ;
 
 expresiones:
     expresion
+    {
+        char aux[10];
+        char op1[10];
+        char op2[10];
+
+        sprintf(aux, "@aux%d", varAux);
+        varAux ++;
+
+        Aind = crearTerceto(aux, "_", "_");
+
+        sprintf(op1, "[%d]", Aind);
+        sprintf(op2, "[%d]", Eind);
+        crearTerceto(":=", op1, op2);
+    }
     { fprintf(pparser, "31) expresiones -> expresion\n"); }
     ;
 

@@ -293,3 +293,201 @@ void generarWrite(char* str, int string)
 
     crearTerceto("WRITE", op, "_");
 }
+
+int sumarPrimos(int n)
+{
+    int suma = 0;
+    int contador = 0;
+    int numero = 2;
+
+    while (contador < n)
+    {
+        if (esPrimo(numero))
+        {
+                suma += numero;
+                contador ++;
+        }
+
+        numero++;
+    }
+
+    return suma;
+}
+
+int esPrimo(int n)
+{
+    if(n < 2)
+        return 0;
+
+    for(int i = 2; i * i <= n; i ++)
+        if (n % i == 0) 
+            return 0;
+
+    return 1;
+}
+
+void reorder(char* o, char* p)
+{
+    char op1[10];
+    char op2[10];
+
+    Eind = crearTerceto(o, "_", "_");
+    Aind = crearTerceto("@orden", "_", "_");
+
+    sprintf(op1, "[%d]", Aind);
+    sprintf(op2, "[%d]", Eind);
+    crearTerceto(":=", op1, op2);
+
+    Eind = crearTerceto(p, "_", "_");
+    Aind = crearTerceto("@pivot", "_", "_");
+
+    sprintf(op1, "[%d]", Aind);
+    sprintf(op2, "[%d]", Eind);
+    crearTerceto(":=", op1, op2);
+
+    int orden = atoi(o);
+    int pivot = atoi(p);
+    
+    validarParametrosReorder(orden, pivot);
+
+    if(orden)
+        reorderIzquierda(pivot); 
+    else
+        reorderDerecha(pivot);
+    varAux = 0;
+
+    return;
+}
+
+void reorderIzquierda(int pivot)
+{
+    // pivot: Es la posición que se usa como referencia para el reordenamiento.
+
+    //Variables Locales
+    char auxInicial[10];
+    char auxFinal[10];
+    char op1[10];
+    char op2[10];
+    int inicio = 0;
+    int fin = pivot/2;
+
+    //Se recorre la lista desde el comienzo hasta la mitad
+    while(inicio <= fin)
+    {
+        //Copiar @auxFinal en temp
+        sprintf(auxFinal, "@aux%d", pivot - inicio);
+
+        Eind = crearTerceto(auxFinal, "_", "_");
+        Aind = crearTerceto("@temp", "_", "_");
+
+        sprintf(op1, "[%d]", Aind);
+        sprintf(op2, "[%d]", Eind);
+
+        crearTerceto(":=", op1, op2);
+
+        //Copiar @auxInicial en @auxFinal
+        sprintf(auxInicial, "@aux%d", inicio);
+        sprintf(auxFinal, "@aux%d", pivot - inicio);
+
+        Eind = crearTerceto(auxInicial, "_", "_");
+        Aind = crearTerceto(auxFinal, "_", "_");
+
+        sprintf(op1, "[%d]", Aind);
+        sprintf(op2, "[%d]", Eind);
+
+        crearTerceto(":=", op1, op2);
+
+        //Copiar @temp en @auxInicial
+        sprintf(auxInicial, "@aux%d", inicio);
+
+        Eind = crearTerceto("@temp", "_", "_");
+        Aind = crearTerceto(auxInicial, "_", "_");
+
+        sprintf(op1, "[%d]", Aind);
+        sprintf(op2, "[%d]", Eind);
+
+        crearTerceto(":=", op1, op2);
+
+        //Control de condición
+        inicio ++;
+    }
+
+    return;
+}
+
+void reorderDerecha(int pivot)
+{
+    // pivot: Es la posición que se usa como referencia para el reordenamiento.
+
+    //Variables Locales
+    char auxInicial[10];
+    char auxFinal[10];
+    char op1[10];
+    char op2[10];
+    int inicio = pivot;
+    int fin = varAux;
+
+    while (inicio < fin)
+    {
+        //Copiar @auxFinal en temp
+        sprintf(auxInicial, "@aux%d", inicio);
+
+        Eind = crearTerceto(auxInicial, "_", "_");
+        Aind = crearTerceto("@temp", "_", "_");
+
+        sprintf(op1, "[%d]", Aind);
+        sprintf(op2, "[%d]", Eind);
+
+        crearTerceto(":=", op1, op2);
+
+        //Copiar @auxInicial en @auxFinal
+        sprintf(auxInicial, "@aux%d", inicio);
+        sprintf(auxFinal, "@aux%d", fin - 1);
+
+        Eind = crearTerceto(auxFinal, "_", "_");
+        Aind = crearTerceto(auxInicial, "_", "_");
+
+        sprintf(op1, "[%d]", Aind);
+        sprintf(op2, "[%d]", Eind);
+
+        crearTerceto(":=", op1, op2);
+
+        //Copiar @temp en @auxInicial
+        sprintf(auxFinal, "@aux%d", fin - 1);
+
+        Eind = crearTerceto("@temp", "_", "_");
+        Aind = crearTerceto(auxFinal, "_", "_");
+
+        sprintf(op1, "[%d]", Aind);
+        sprintf(op2, "[%d]", Eind);
+
+        crearTerceto(":=", op1, op2);
+
+        //Control de condición
+        inicio++;
+        fin--;
+    }
+
+    return;
+}
+
+void validarParametrosReorder(int orden, int pivot)
+{
+    //Parámetros
+    // orden: Si es 1, reordena a la izquierda del pivot. Si es 0, reordena a la derecha del pivot.
+    // pivot: Es la posición que se usa como referencia para el reordenamiento.
+
+    //Si el pivot es igual o superior al tamaño de la lista, no se puede ordenar.
+    if(pivot >= varAux)
+        yyerror("El pivot supera el tamano de la lista.");
+
+    //Si el pivot es el primer elemento, no se puede reordenar hacia la izquierda.
+    if(orden && pivot == 0)
+        yyerror("No se puede reordenar hacia la izquierda cuando el pivot es el primer elemento.");
+
+    //Si el pivot es el último elemento, no se puede reordenar hacia la derecha.
+    if(!orden && pivot == varAux)
+        yyerror("No se puede reordenar hacia la derecha cuando el pivot es el ultimo elemento.");
+
+    return;
+}

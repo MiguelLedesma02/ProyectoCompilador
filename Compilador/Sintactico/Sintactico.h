@@ -31,6 +31,7 @@ extern Pila* Bpila; //Bloque
 extern int indiceTerceto;
 extern int cantVarEnLinea;
 extern int cantVarDeclaradas;
+extern int varAux;
 
 char varDeclaradas[MAX_VAR_DECLARADAS][MAX_LONG_ID];
 //Esto limita a 15 la cantidad de variables que pueden declararse en una línea
@@ -67,6 +68,12 @@ void generarInicioIfElse();
 void generarFinIfElse();
 void generarRead(char* id);
 void generarWrite(char* str, int string);
+int sumarPrimos(int n);
+int esPrimo(int n);
+void reorder(char* o, char* p);
+void reorderIzquierda(int pivot);
+void reorderDerecha(int pivot);
+void validarParametrosReorder(int orden, int pivot);
 
 extern int yyerror(char* descripcion);
 

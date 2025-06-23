@@ -8,44 +8,23 @@
 46) expresion -> termino
 51) factor -> CONST_INT
 49) termino -> factor
+44) expresion -> expresion + termino
+31) expresiones -> expresion
+51) factor -> CONST_INT
+49) termino -> factor
 46) expresion -> termino
-38) condicion -> expresion > expresion
-32) condiciones -> condicion
+51) factor -> CONST_INT
+49) termino -> factor
+44) expresion -> expresion + termino
+30) expresiones -> expresiones , expresion
+51) factor -> CONST_INT
+49) termino -> factor
+46) expresion -> termino
 50) factor -> ID
 49) termino -> factor
-46) expresion -> termino
-51) factor -> CONST_INT
-49) termino -> factor
-46) expresion -> termino
-40) condicion -> expresion < expresion
-35) condiciones -> condiciones OR condicion
-50) factor -> ID
-49) termino -> factor
-46) expresion -> termino
-51) factor -> CONST_INT
-49) termino -> factor
-46) expresion -> termino
-42) condicion -> expresion == expresion
-34) condiciones -> condiciones AND condicion
-26) write -> WRITE ( ID )
-17) sentencia -> write
-12) bloque -> sentencia
-51) factor -> CONST_INT
-49) termino -> factor
-46) expresion -> termino
-20) asignacion -> ID := expresion
-13) sentencia -> asignacion
-11) bloque -> bloque sentencia
-26) write -> WRITE ( ID )
-17) sentencia -> write
-12) bloque -> sentencia
-51) factor -> CONST_INT
-49) termino -> factor
-46) expresion -> termino
-20) asignacion -> ID := expresion
-13) sentencia -> asignacion
-11) bloque -> bloque sentencia
-24) seleccion -> IF ( condiciones ) { bloque } ELSE { bloque } 
-15) sentencia -> seleccion
+45) expresion -> expresion - termino
+30) expresiones -> expresiones , expresion
+28) reorder -> REORDER ( [ expresiones ] , CONST_INT , CONST_INT )
+18) sentencia -> reorder
 12) bloque -> sentencia
 1) programa -> variables bloque
