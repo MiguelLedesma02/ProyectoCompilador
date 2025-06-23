@@ -1,9 +1,2 @@
-a|CTE_INTEGER|-|1
-b|CTE_INTEGER|-|1
-var1|CTE_STRING|-|4
-var2|CTE_STRING|-|4
-var3|CTE_STRING|-|4
-x|CTE_FLOAT|-|1
-y|CTE_FLOAT|-|1
-z|CTE_FLOAT|-|1
-Hola Mundo!|CTE_STRING|Hola Mundo!|11
+a|CTE_STRING|-|1
+b|CTE_STRING|-|1

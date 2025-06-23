@@ -140,3 +140,40 @@ void modificarToken(FILE* pf, FILE* ptemp, entrada_ts nuevaEntrada)
 
     return;
 }
+
+char* getTipo(FILE *pf, char* tk, char* td)
+{
+    int tam = MAX_LONG_STR + MAX_LONG_TD + MAX_LONG_STR + MAX_LONG_LONG;
+    char* linea = malloc(tam);
+    entrada_ts entrada;
+
+    strcpy(entrada.tipoDato, "NULL");
+
+    //Se coloca el puntero al inicio del archivo.
+    rewind(pf);
+
+    while(fgets(linea, tam, pf))
+    {
+        char* lineaAux = malloc(tam);
+        strcpy(lineaAux, linea);
+
+        sscanf(linea, "%[^|]|%[^|]|%[^|]|%u",
+               entrada.nombre,
+               entrada.tipoDato,
+               entrada.valor,
+               &entrada.longitud);
+
+        if(strcmp(entrada.nombre, tk) == 0)
+        {
+            free(lineaAux);
+            break;
+        }
+
+        free(lineaAux);
+    }
+
+    strcpy(td, entrada.tipoDato);
+    free(linea);
+
+    return td;
+}

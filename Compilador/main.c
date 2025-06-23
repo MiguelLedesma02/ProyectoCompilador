@@ -15,6 +15,10 @@ FILE *ptemp = NULL;
 
 Pila* Epila;
 Pila* Tpila;
+
+Pila* ETDpila;
+Pila* TTDpila;
+
 Pila* Bpila;
 Pila* Vpila;
 
@@ -43,6 +47,9 @@ int main (int argc, char* argv[])
 
     Epila = crearPila();
     Tpila = crearPila();
+    ETDpila = crearPila();
+    TTDpila = crearPila();
+
     Bpila = crearPila();
     Vpila = crearPila();
 
@@ -72,6 +79,9 @@ int main (int argc, char* argv[])
 
     destruirPila(Epila);
     destruirPila(Tpila);
+    destruirPila(ETDpila);
+    destruirPila(TTDpila); 
+
     destruirPila(Bpila);
     destruirPila(Vpila);
 

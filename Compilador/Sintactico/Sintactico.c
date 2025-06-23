@@ -58,6 +58,17 @@ int generarCondicion(char* condicion)
     char op1[10];
     char op2[10];
 
+    int auxTD = desapilar(ETDpila);
+    char td[MAX_LONG_TD];
+
+    if(auxTD == 1)
+        strcpy(td, "CTE_INTEGER");
+    else
+        strcpy(td, "CTE_FLOAT");
+
+    if(strcmp(ETDind, td) != 0)
+        yyerror("No se pueden comparar tipos de datos incompatibles.");
+
     sprintf(op1, "[%d]", parteIzq);
     sprintf(op2, "[%d]", parteDer);
 

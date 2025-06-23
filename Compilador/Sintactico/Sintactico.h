@@ -11,7 +11,15 @@
 
 extern Pila* Epila; //Expresion
 extern Pila* Tpila; //Termino
+extern Pila* ETDpila; //Expresion
+extern Pila* TTDpila; //Termino
 extern Pila* Bpila; //Bloque
+
+
+/*
+    Si en la pila de ETD o TTD pongo un 1 es un CTE_INTEGER.
+    Si en la pila de ETD o TTD pongo un 2 es un CTE_FLOAT.
+*/
 
 extern int indiceTerceto;
 extern int cantVarEnLinea;
@@ -31,6 +39,10 @@ int Find; //Factor
 
 int Cind; //Condición
 
+char ETDind[MAX_LONG_TD]; //Tipo de Dato Expresión
+char TTDind[MAX_LONG_TD]; //Tipo de Dato Término
+char FTDind[MAX_LONG_TD]; //Tipo de Dato Factor
+
 /*FUNCIONES SEMÁNTICAS*/
 int setTipoDato(FILE *pf, FILE *ptemp, char* tipoDato);
 int generarCondicion(char* condicion);
@@ -41,5 +53,7 @@ void generarInicioIfElse();
 void generarFinIfElse();
 void generarRead(char* id);
 void generarWrite(char* str, int string);
+
+extern int yyerror(char* descripcion);
 
 #endif

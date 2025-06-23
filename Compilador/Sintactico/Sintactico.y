@@ -207,6 +207,14 @@ sentencia:
 asignacion:
 	ID OP_ASIG expresion
     {
+        char auxTD[MAX_LONG_TD];
+
+        getTipo(pst, $1, auxTD);
+
+        if(strcmp(auxTD, ETDind) != 0)
+            yyerror("No se pueden realizar asignaciones con tipos de datos incompatibles.");
+    }
+    {
         char op1[10];
         char op2[10];
 
@@ -222,6 +230,14 @@ asignacion:
 
 asignacion:
 	ID OP_ASIG CONST_STRING
+    {
+        char auxTD[MAX_LONG_TD];
+
+        getTipo(pst, $1, auxTD);
+
+        if(strcmp(auxTD, "CTE_STRING") != 0)
+            yyerror("No se pueden realizar asignaciones con tipos de datos incompatibles.");
+    }
     {
         char op[MAX_LONG_STR];
         char op1[10];
@@ -312,52 +328,123 @@ condiciones:
     ;
 
 condiciones:
-    condiciones NOT condicion
-    { fprintf(pparser, "36) condiciones -> condiciones NOT condicion\n"); }
-    ;
-
-condiciones:
     condiciones AND NOT condicion
-    { fprintf(pparser, "37) condiciones -> condiciones AND NOT condicion\n"); }
+    { fprintf(pparser, "36) condiciones -> condiciones AND NOT condicion\n"); }
     ;
 
 condiciones:
     condiciones OR NOT condicion
-    { fprintf(pparser, "38) condiciones -> condiciones OR NOT condicion\n"); }
+    { fprintf(pparser, "37) condiciones -> condiciones OR NOT condicion\n"); }
     ;
 
 condicion:
-    expresion { apilar(Bpila, Eind); } OP_MAYOR expresion { Cind = generarCondicion("BLE"); }
-    { fprintf(pparser, "39) condicion -> expresion > expresion\n"); }
+    expresion
+    {
+        apilar(Bpila, Eind);
+        
+        if(strcmp(ETDind, "CTE_INTEGER") == 0)
+            apilar(ETDpila, 1);
+        else
+            apilar(ETDpila, 2);
+    }
+    OP_MAYOR expresion { Cind = generarCondicion("BLE"); }
+    { fprintf(pparser, "38) condicion -> expresion > expresion\n"); }
     ;
 
 condicion:
-    expresion { apilar(Bpila, Eind); } OP_MAYOR_IGUAL expresion { Cind = generarCondicion("BLT"); }
-    { fprintf(pparser, "40) condicion -> expresion >= expresion\n"); }
+    expresion
+    {
+        apilar(Bpila, Eind);
+        
+        if(strcmp(ETDind, "CTE_INTEGER") == 0)
+            apilar(ETDpila, 1);
+        else
+            apilar(ETDpila, 2);
+    } 
+    OP_MAYOR_IGUAL expresion { Cind = generarCondicion("BLT"); }
+    { fprintf(pparser, "39) condicion -> expresion >= expresion\n"); }
     ;
 
 condicion:
-    expresion { apilar(Bpila, Eind); } OP_MENOR expresion { Cind = generarCondicion("BGE"); }
-    { fprintf(pparser, "41) condicion -> expresion < expresion\n"); }
+    expresion
+    {
+        apilar(Bpila, Eind);
+        
+        if(strcmp(ETDind, "CTE_INTEGER") == 0)
+            apilar(ETDpila, 1);
+        else
+            apilar(ETDpila, 2);
+    } 
+    OP_MENOR expresion { Cind = generarCondicion("BGE"); }
+    { fprintf(pparser, "40) condicion -> expresion < expresion\n"); }
     ;
 
 condicion:
-    expresion { apilar(Bpila, Eind); } OP_MENOR_IGUAL expresion { Cind = generarCondicion("BGT"); }
-    { fprintf(pparser, "42) condicion -> expresion <= expresion\n"); }
+    expresion
+    {
+        apilar(Bpila, Eind);
+        
+        if(strcmp(ETDind, "CTE_INTEGER") == 0)
+            apilar(ETDpila, 1);
+        else
+            apilar(ETDpila, 2);
+    } 
+    OP_MENOR_IGUAL expresion { Cind = generarCondicion("BGT"); }
+    { fprintf(pparser, "41) condicion -> expresion <= expresion\n"); }
     ;
 
 condicion:
-    expresion { apilar(Bpila, Eind); } OP_IGUAL expresion { Cind = generarCondicion("BNE"); }
-    { fprintf(pparser, "43) condicion -> expresion == expresion\n"); }
+    expresion
+    {
+        apilar(Bpila, Eind);
+        
+        if(strcmp(ETDind, "CTE_INTEGER") == 0)
+            apilar(ETDpila, 1);
+        else
+            apilar(ETDpila, 2);
+    } 
+    OP_IGUAL expresion { Cind = generarCondicion("BNE"); }
+    { fprintf(pparser, "42) condicion -> expresion == expresion\n"); }
     ;
 
 condicion:
-    expresion { apilar(Bpila, Eind); } OP_DISTINTO expresion { Cind = generarCondicion("BEQ"); }
-    { fprintf(pparser, "44) condicion -> expresion != expresion\n"); }
+    expresion
+    {
+        apilar(Bpila, Eind);
+
+        if(strcmp(ETDind, "CTE_INTEGER") == 0)
+            apilar(ETDpila, 1);
+        else
+            apilar(ETDpila, 2);
+    } 
+    OP_DISTINTO expresion { Cind = generarCondicion("BEQ"); }
+    { fprintf(pparser, "43) condicion -> expresion != expresion\n"); }
     ;
 
 expresion:
-    expresion { apilar(Epila, Eind); } OP_SUMA termino { Eind = desapilar(Epila); }
+    expresion
+    {
+        apilar(Epila, Eind);
+
+        if(strcmp(ETDind, "CTE_INTEGER") == 0)
+            apilar(ETDpila, 1);
+        else
+            apilar(ETDpila, 2);
+    } 
+    OP_SUMA termino
+    { 
+        Eind = desapilar(Epila);
+
+        int auxTD = desapilar(ETDpila);
+
+        if(auxTD == 1)
+            strcpy(ETDind, "CTE_INTEGER");
+        else
+            strcpy(ETDind, "CTE_FLOAT");
+
+        if(strcmp(ETDind, TTDind) != 0)
+            yyerror("No se pueden sumar tipos de datos incompatibles.");
+    }
     {
         char op1[10];
         char op2[10];
@@ -367,11 +454,33 @@ expresion:
 
         Eind = crearTerceto($3, op1, op2);
     }
-    { fprintf(pparser, "45) expresion -> expresion + termino\n"); }
+    { fprintf(pparser, "44) expresion -> expresion + termino\n"); }
     ;
 
 expresion:
-    expresion { apilar(Epila, Eind); } OP_RESTA termino { Eind = desapilar(Epila); }
+    expresion
+    {
+        apilar(Epila, Eind);
+
+        if(strcmp(ETDind, "CTE_INTEGER") == 0)
+            apilar(ETDpila, 1);
+        else
+            apilar(ETDpila, 2);
+    } 
+    OP_RESTA termino
+    { 
+        Eind = desapilar(Epila);
+
+        int auxTD = desapilar(ETDpila);
+
+        if(auxTD == 1)
+            strcpy(ETDind, "CTE_INTEGER");
+        else
+            strcpy(ETDind, "CTE_FLOAT");
+
+        if(strcmp(ETDind, TTDind) != 0)
+            yyerror("No se pueden restar tipos de datos incompatibles.");
+    }
     {
         char op1[10];
         char op2[10];
@@ -381,17 +490,41 @@ expresion:
 
         Eind = crearTerceto($3, op1, op2); 
     }
-    { fprintf(pparser, "46) expresion -> expresion - termino\n"); }
+    { fprintf(pparser, "45) expresion -> expresion - termino\n"); }
     ;
 
 expresion:
     termino
-    { Eind = Tind; }
-    { fprintf(pparser, "47) expresion -> termino\n"); }
+    {
+        strcpy(ETDind , TTDind);
+        Eind = Tind;
+    }
+    { fprintf(pparser, "46) expresion -> termino\n"); }
     ;
 
 termino:
-    termino { apilar(Tpila, Tind); } OP_PRODUCTO factor { Tind = desapilar(Tpila); }
+    termino
+    {
+        apilar(Tpila, Tind);
+
+        if(strcmp(TTDind, "CTE_INTEGER") == 0)
+            apilar(TTDpila, 1);
+        else
+            apilar(TTDpila, 2);
+    } 
+    OP_PRODUCTO factor
+    { 
+        Tind = desapilar(Tpila);
+        int auxTD = desapilar(TTDpila);
+
+        if(auxTD == 1)
+            strcpy(TTDind, "CTE_INTEGER");
+        else
+            strcpy(TTDind, "CTE_FLOAT");
+
+        if(strcmp(TTDind, FTDind) != 0)
+            yyerror("No se pueden multiplicar tipos de datos incompatibles.");
+    }
     {
         char op1[10];
         char op2[10];
@@ -401,11 +534,32 @@ termino:
 
         Tind = crearTerceto($3, op1, op2); 
     }
-    { fprintf(pparser, "48) termino -> termino * factor\n"); }
+    { fprintf(pparser, "47) termino -> termino * factor\n"); }
     ;
 
 termino:
-    termino { apilar(Tpila, Tind); } OP_COCIENTE factor { Tind = desapilar(Tpila); }
+    termino
+    {
+        apilar(Tpila, Tind);
+
+        if(strcmp(TTDind, "CTE_INTEGER") == 0)
+            apilar(TTDpila, 1);
+        else
+            apilar(TTDpila, 2);
+    } 
+    OP_COCIENTE factor
+    { 
+        Tind = desapilar(Tpila);
+        int auxTD = desapilar(TTDpila);
+
+        if(auxTD == 1)
+            strcpy(TTDind, "CTE_INTEGER");
+        else
+            strcpy(TTDind, "CTE_FLOAT");
+
+        if(strcmp(TTDind, FTDind) != 0)
+            yyerror("No se pueden dividir tipos de datos incompatibles.");
+    }
     {
         char op1[10];
         char op2[10];
@@ -415,37 +569,56 @@ termino:
 
         Tind = crearTerceto($3, op1, op2); 
     }
-    { fprintf(pparser, "49) termino -> termino / factor\n"); }
+    { fprintf(pparser, "48) termino -> termino / factor\n"); }
     ;
 
 termino:
     factor
-    { Tind = Find; }
-    { fprintf(pparser, "50) termino -> factor\n"); }
+    {
+        strcpy(TTDind , FTDind);
+        Tind = Find;
+    }
+    { fprintf(pparser, "49) termino -> factor\n"); }
     ;
 
 factor:
     ID
-    { Find = crearTerceto($1, "_", "_"); }
-    { fprintf(pparser, "51) factor -> ID\n"); }
+    {
+        char auxTD[MAX_LONG_TD];
+
+        getTipo(pst, $1, auxTD);
+
+        strcpy(FTDind, auxTD);
+        Find = crearTerceto($1, "_", "_");
+    }
+    { fprintf(pparser, "50) factor -> ID\n"); }
     ;
 
 factor:
     CONST_INT
-    { Find = crearTerceto($1, "_", "_"); }
-    { fprintf(pparser, "52) factor -> CONST_INT\n"); }
+    { 
+        strcpy(FTDind, "CTE_INTEGER");
+        Find = crearTerceto($1, "_", "_");
+    }
+    { fprintf(pparser, "51) factor -> CONST_INT\n"); }
     ;
 
 factor:
     CONST_FLOAT
-    { Find = crearTerceto($1, "_", "_"); }
-    { fprintf(pparser, "53) factor -> CONST_FLOAT\n"); }
+    {
+        strcpy(FTDind, "CTE_FLOAT");
+        Find = crearTerceto($1, "_", "_");
+    }
+    { fprintf(pparser, "52) factor -> CONST_FLOAT\n"); }
     ;
 
 factor:
     PAR_AP expresion PAR_CL
-    { Find = Eind; }
-    { fprintf(pparser, "54) factor -> ( expresion )\n"); }
+    {
+        strcpy(FTDind, ETDind);
+        Find = Eind;
+    }
+    { fprintf(pparser, "53) factor -> ( expresion )\n"); }
     ;
 
 %%
@@ -459,5 +632,7 @@ int yyerror(char* descripcion)
     printf("LINEA: %d\n", yylineno);
     printf("\n");
 
+    fclose(ptemp);
+    remove("temp.txt");
     exit(1);
 }
