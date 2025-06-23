@@ -1,6 +1,18 @@
 init
 {
-    a : string
+    a : int
 }
 
-write(a)
+if( a > 5 OR a < 10 AND a == 4)
+{
+    write(a)
+
+    a := 20
+}
+else
+{
+    write(a)
+
+    a := 40
+}
+

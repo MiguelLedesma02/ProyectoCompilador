@@ -44,6 +44,39 @@ int setTipoDato(FILE *pf, FILE *ptemp, char* tipoDato)
     return 1;
 }
 
+int declararVar(char* var)
+{
+    /*Se retorna 1 si la variable se guardó correctamente.*/
+    /*Se retorna 0 si la variable ya existe.*/
+
+    /*var es la variable*/
+
+    if(buscarVar(var) == 1)
+        return 0;
+
+    strcpy(varDeclaradas[cantVarDeclaradas], var);
+
+    cantVarDeclaradas ++;
+
+    return 1;
+}
+
+int buscarVar(char* var)
+{
+    /*Se retorna 1 si la variable ya existe.*/
+    /*Se retorna 0 si la variable no existe.*/
+
+    /*var es la variable*/
+
+    for(int i = 0; i < cantVarDeclaradas; i ++)
+    {
+        if(strcmp(var, varDeclaradas[i]) == 0)
+            return 1;
+    }
+
+    return 0;
+}
+
 int generarCondicion(char* condicion)
 {
     /*condicion es el salto que debe realizar*/
@@ -125,6 +158,23 @@ void generarWhile()
     sprintf(op, "[%d]", finWhile + 1);
     completarTerceto(salto, op);
 
+    char opAux[10];
+    int inicioBloque = desapilar(AUXPila);
+    sprintf(opAux, "[%d]", inicioBloque);
+
+    while(!pilaVacia(ORPila))
+    {
+        int aux = desapilar(ORPila);
+        negarCondicion(aux);
+        completarTerceto(aux, opAux);
+    }
+
+    while(!pilaVacia(ANDPila))
+    {
+        int aux = desapilar(ANDPila);
+        completarTerceto(aux, op);
+    }
+
     return;
 }
 
@@ -139,6 +189,23 @@ void generarIf()
 
     sprintf(op, "[%d]", finIf);
     completarTerceto(salto, op);
+
+    char opAux[10];
+    int inicioBloque = desapilar(AUXPila);
+    sprintf(opAux, "[%d]", inicioBloque);
+
+    while(!pilaVacia(ORPila))
+    {
+        int aux = desapilar(ORPila);
+        negarCondicion(aux);
+        completarTerceto(aux, opAux);
+    }
+
+    while(!pilaVacia(ANDPila))
+    {
+        int aux = desapilar(ANDPila);
+        completarTerceto(aux, op);
+    }
 
     return;
 }
@@ -156,6 +223,17 @@ void generarInicioIfElse()
     sprintf(op, "[%d]", finIf + 1);
     completarTerceto(salto, op);
 
+    char opAux[10];
+    int inicioBloque = desapilar(AUXPila);
+    sprintf(opAux, "[%d]", inicioBloque);
+
+    while(!pilaVacia(ORPila))
+    {
+        int aux = desapilar(ORPila);
+        negarCondicion(aux);
+        completarTerceto(aux, opAux);
+    }
+
     return;
 }
 
@@ -170,6 +248,16 @@ void generarFinIfElse()
 
     sprintf(op, "[%d]", finElse);
     completarTerceto(salto, op);
+
+    char opAux[10];
+    int inicioBloque = desapilar(AUXPila);
+    sprintf(opAux, "[%d]", inicioBloque);
+
+    while(!pilaVacia(ANDPila))
+    {
+        int aux = desapilar(ANDPila);
+        completarTerceto(aux, opAux);
+    }
 
     return;
 }

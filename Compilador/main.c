@@ -19,6 +19,10 @@ Pila* Tpila;
 Pila* ETDpila;
 Pila* TTDpila;
 
+Pila* ANDPila;
+Pila* ORPila;
+Pila* AUXPila;
+
 Pila* Bpila;
 Pila* Vpila;
 
@@ -47,8 +51,13 @@ int main (int argc, char* argv[])
 
     Epila = crearPila();
     Tpila = crearPila();
+
     ETDpila = crearPila();
     TTDpila = crearPila();
+
+    ANDPila = crearPila();
+    ORPila = crearPila();
+    AUXPila = crearPila();
 
     Bpila = crearPila();
     Vpila = crearPila();
@@ -79,8 +88,13 @@ int main (int argc, char* argv[])
 
     destruirPila(Epila);
     destruirPila(Tpila);
+
     destruirPila(ETDpila);
     destruirPila(TTDpila); 
+
+    destruirPila(ANDPila);
+    destruirPila(ORPila);
+    destruirPila(AUXPila);
 
     destruirPila(Bpila);
     destruirPila(Vpila);

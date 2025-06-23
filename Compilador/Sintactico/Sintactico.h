@@ -7,12 +7,19 @@
 #include "../Pila/Pila.h"
 
 /*VARIABLES GLOBALES*/
+#define MAX_VAR_DECLARADAS 200
 #define MAX_VAR_EN_LINEA 15
 
 extern Pila* Epila; //Expresion
 extern Pila* Tpila; //Termino
+
 extern Pila* ETDpila; //Expresion
 extern Pila* TTDpila; //Termino
+
+extern Pila* ANDPila; //Condiciones AND
+extern Pila* ORPila; //Condiciones OR
+extern Pila* AUXPila; //Auxiliar
+
 extern Pila* Bpila; //Bloque
 
 
@@ -23,7 +30,9 @@ extern Pila* Bpila; //Bloque
 
 extern int indiceTerceto;
 extern int cantVarEnLinea;
+extern int cantVarDeclaradas;
 
+char varDeclaradas[MAX_VAR_DECLARADAS][MAX_LONG_ID];
 //Esto limita a 15 la cantidad de variables que pueden declararse en una línea
 char varEnLinea[MAX_VAR_EN_LINEA][MAX_LONG_ID];
 char tipoDato[MAX_LONG_TD];
@@ -39,12 +48,17 @@ int Find; //Factor
 
 int Cind; //Condición
 
+int auxAND;
+int auxOR;
+
 char ETDind[MAX_LONG_TD]; //Tipo de Dato Expresión
 char TTDind[MAX_LONG_TD]; //Tipo de Dato Término
 char FTDind[MAX_LONG_TD]; //Tipo de Dato Factor
 
 /*FUNCIONES SEMÁNTICAS*/
 int setTipoDato(FILE *pf, FILE *ptemp, char* tipoDato);
+int declararVar(char* var);
+int buscarVar(char* var);
 int generarCondicion(char* condicion);
 void negarCondicion(int indice);
 void generarWhile();

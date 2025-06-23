@@ -1,13 +1,51 @@
 10) lista_var -> ID
-7) t_dato -> STRING
+6) t_dato -> INT
 5) declaracion -> lista_var : t_dato
 4) declaraciones -> declaracion
-10) lista_var -> ID
-7) t_dato -> STRING
-5) declaracion -> lista_var : t_dato
-3) declaraciones -> declaraciones declaracion
 2) variables -> INIT { declaraciones }
+50) factor -> ID
+49) termino -> factor
+46) expresion -> termino
+51) factor -> CONST_INT
+49) termino -> factor
+46) expresion -> termino
+38) condicion -> expresion > expresion
+32) condiciones -> condicion
+50) factor -> ID
+49) termino -> factor
+46) expresion -> termino
+51) factor -> CONST_INT
+49) termino -> factor
+46) expresion -> termino
+40) condicion -> expresion < expresion
+35) condiciones -> condiciones OR condicion
+50) factor -> ID
+49) termino -> factor
+46) expresion -> termino
+51) factor -> CONST_INT
+49) termino -> factor
+46) expresion -> termino
+42) condicion -> expresion == expresion
+34) condiciones -> condiciones AND condicion
 26) write -> WRITE ( ID )
 17) sentencia -> write
+12) bloque -> sentencia
+51) factor -> CONST_INT
+49) termino -> factor
+46) expresion -> termino
+20) asignacion -> ID := expresion
+13) sentencia -> asignacion
+11) bloque -> bloque sentencia
+26) write -> WRITE ( ID )
+17) sentencia -> write
+12) bloque -> sentencia
+51) factor -> CONST_INT
+49) termino -> factor
+46) expresion -> termino
+20) asignacion -> ID := expresion
+13) sentencia -> asignacion
+11) bloque -> bloque sentencia
+24) seleccion -> IF ( condiciones ) { bloque } ELSE { bloque } 
+15) sentencia -> seleccion
 12) bloque -> sentencia
 1) programa -> variables bloque

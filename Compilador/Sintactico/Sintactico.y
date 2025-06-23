@@ -9,6 +9,7 @@ extern FILE *pst;
 extern FILE *ptemp;
 
 int cantVarEnLinea = 0;
+int cantVarDeclaradas = 0;
 
 /*FUNCIONES DEL SINTÁCTICO*/
 int yylex();
@@ -141,6 +142,9 @@ t_dato:
 lista_var:
 	lista_var COMA ID
     { 
+        if(declararVar($3) == 0)
+            yyerror("Se declaro una variable que habia sido previamente declarada.");
+
         if(cantVarEnLinea >= MAX_VAR_EN_LINEA)
             yyerror("Se ha excedido de la cantidad de variables que pueden declararse en una linea.");
 
@@ -153,6 +157,9 @@ lista_var:
 lista_var:
     ID
 	{ 
+        if(declararVar($1) == 0)
+            yyerror("Se declaro una variable que habia sido previamente declarada.");
+
         strcpy(varEnLinea[cantVarEnLinea], $1);
         cantVarEnLinea ++;
     }
@@ -207,6 +214,9 @@ sentencia:
 asignacion:
 	ID OP_ASIG expresion
     {
+        if(buscarVar($1) == 0)
+            yyerror("No puede usar una variable que no fue declarada previamente.");
+
         char auxTD[MAX_LONG_TD];
 
         getTipo(pst, $1, auxTD);
@@ -231,6 +241,9 @@ asignacion:
 asignacion:
 	ID OP_ASIG CONST_STRING
     {
+        if(buscarVar($1) == 0)
+            yyerror("No puede usar una variable que no fue declarada previamente.");
+
         char auxTD[MAX_LONG_TD];
 
         getTipo(pst, $1, auxTD);
@@ -257,28 +270,61 @@ asignacion:
     ;
 
 iteracion:
-	WHILE { apilar(Bpila, indiceTerceto); } PAR_AP condiciones PAR_CL LLA_AP bloque LLA_CL { generarWhile(); }
+	WHILE { apilar(Bpila, indiceTerceto); } PAR_AP condiciones PAR_CL LLA_AP
+    { apilar(AUXPila, indiceTerceto); } bloque LLA_CL { generarWhile(); }
     { fprintf(pparser, "22) iteracion -> WHILE ( condiciones ) { bloque }\n"); }
     ;
 
 seleccion:
-	IF PAR_AP condiciones PAR_CL LLA_AP bloque LLA_CL { generarIf(); }
+	IF PAR_AP condiciones PAR_CL LLA_AP marcador_if bloque LLA_CL marcador_fin_if
     { fprintf(pparser, "23) seleccion -> IF ( condiciones ) { bloque }\n"); }
     ;
 
 seleccion:
-	IF PAR_AP condiciones PAR_CL LLA_AP bloque LLA_CL { generarInicioIfElse(); }
-    ELSE LLA_AP bloque LLA_CL { generarFinIfElse(); }
+    IF PAR_AP condiciones PAR_CL LLA_AP marcador_if bloque LLA_CL marcador_else
+    ELSE LLA_AP marcador_else_if bloque LLA_CL marcador_fin_else
     { fprintf(pparser, "24) seleccion -> IF ( condiciones ) { bloque } ELSE { bloque } \n"); }
     ;
 
+marcador_if:
+    { apilar(AUXPila, indiceTerceto); }
+    ;
+
+marcador_fin_if:
+    { generarIf(); }
+    ;
+
+marcador_else:
+    { generarInicioIfElse(); }
+    ;
+
+marcador_else_if:
+    { apilar(AUXPila, indiceTerceto); }
+    ;
+
+marcador_fin_else:
+    { generarFinIfElse(); }
+    ;
+
 read:
-	READ PAR_AP ID PAR_CL { generarRead($3); }
+	READ PAR_AP ID PAR_CL
+    { 
+        if(buscarVar($3) == 0)
+            yyerror("No puede usar una variable que no fue declarada previamente.");
+        
+        generarRead($3);
+    }
     { fprintf(pparser, "25) read -> READ ( ID )\n") }
 	;
 
 write:
-	WRITE PAR_AP ID PAR_CL { generarWrite($3, 0); }
+	WRITE PAR_AP ID PAR_CL
+    {
+        if(buscarVar($3) == 0)
+            yyerror("No puede usar una variable que no fue declarada previamente.");
+
+        generarWrite($3, 0);
+    }
     { fprintf(pparser, "26) write -> WRITE ( ID )\n") }
 	;
 
@@ -294,6 +340,10 @@ reorder:
 
 sumfirstprimes:
 	ID OP_ASIG SUMFIRSTPRIMES PAR_AP CONST_INT PAR_CL
+    {
+        if(buscarVar($1) == 0)
+            yyerror("No puede usar una variable que no fue declarada previamente.");
+    }
     { fprintf(pparser, "29) sumfirstprimes -> ID := SUMFIRSTPRIMES ( CONST_INT )\n") }
 	;
 
@@ -318,12 +368,12 @@ condiciones:
     ;
 
 condiciones:
-    condiciones AND condicion
+    condiciones AND { auxAND = desapilar(Bpila); apilar(ANDPila, auxAND); } condicion
     { fprintf(pparser, "34) condiciones -> condiciones AND condicion\n"); }
     ;
 
 condiciones:
-    condiciones OR condicion
+    condiciones OR { auxOR = desapilar(Bpila); apilar(ORPila, auxOR); } condicion
     { fprintf(pparser, "35) condiciones -> condiciones OR condicion\n"); }
     ;
 
@@ -584,6 +634,9 @@ termino:
 factor:
     ID
     {
+        if(buscarVar($1) == 0)
+            yyerror("No puede usar una variable que no fue declarada previamente.");
+        
         char auxTD[MAX_LONG_TD];
 
         getTipo(pst, $1, auxTD);
