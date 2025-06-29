@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include "Tercetos.h"
-#include "Lista.h"
 #include "assembler.h"
 
 void generarDataAsm(FILE* f, tLista* listaSimbolos) {
