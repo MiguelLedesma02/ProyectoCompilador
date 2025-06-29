@@ -2,6 +2,7 @@
 #define TERCETOS_H
 
 #include "../Utilitarios/Utilitarios.h"
+#include "../Lista/Lista.h"
 
 /*CONSTANTES*/
 #define MAX_TERCETOS 1000
@@ -21,10 +22,18 @@ typedef struct
 extern Terceto tercetos[MAX_TERCETOS];
 extern int indiceTerceto;
 
+
+
 int crearTerceto(char* operador, char* op1, char* op2);
 void completarTerceto(int indice, char* op);
 char* verOperadorTerceto(int indice);
 void modificarOperadorTerceto(int indice, char* op);
 void imprimirTercetos();
+void generar_assembler(tLista* listaSimbolos);
+void imprimirEncabezadoAss(FILE* archivo);
+int desapilarTercetos();
+void apilarTercetos(int t);
+void modificarTerceto_saltoCondicional(int indice);
+
 
 #endif

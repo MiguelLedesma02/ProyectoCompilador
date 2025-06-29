@@ -1,6 +1,7 @@
 %{
 
 #include "Sintactico.h"
+#include "../Lista/Lista.h"
 
 /*VARIABLES GLOBALES*/
 extern int yylineno;
@@ -15,6 +16,7 @@ int varAux = 0;
 /*FUNCIONES DEL SINTÁCTICO*/
 int yylex();
 int yyerror(char* descripcion);
+tLista listaSimbolos;
 
 %}
 
@@ -97,7 +99,7 @@ int yyerror(char* descripcion);
 
 programa:
 	variables bloque
-    { fprintf(pparser, "1) programa -> variables bloque\n"); }
+    { fprintf(pparser, "1) programa -> variables bloque\n"); generar_assembler(&listaSimbolos);}
 	;
 
 variables:

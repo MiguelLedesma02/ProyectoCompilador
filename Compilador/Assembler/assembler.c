@@ -1,7 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "Tercetos.h"
+#include "../Tercetos/Tercetos.h"
+#include "../Lista/Lista.h"
 #include "assembler.h"
 
 void generarDataAsm(FILE* f, tLista* listaSimbolos) {
@@ -28,7 +29,7 @@ void generarDataAsm(FILE* f, tLista* listaSimbolos) {
     }
     
     // Variables temporales para resultados intermedios
-    for (int i = 0; i < cant_tercetos; i++) {
+    for (int i = 0; i < indiceTerceto; i++) {
         if (strcmp(tercetos[i].operador, "+") == 0 || strcmp(tercetos[i].operador, "-") == 0 ||
             strcmp(tercetos[i].operador, "*") == 0 || strcmp(tercetos[i].operador, "/") == 0 ||
             strcmp(tercetos[i].operador, ":=") == 0) {
@@ -37,7 +38,7 @@ void generarDataAsm(FILE* f, tLista* listaSimbolos) {
     }
     
     // Strings para WRITE
-    for (int i = 0; i < cant_tercetos; i++) {
+    for (int i = 0; i < indiceTerceto; i++) {
         if (strcmp(tercetos[i].operador, "WRITE") == 0 && 
             tercetos[i].operando1[0] == '"') {
             fprintf(f, "_str%-10d db %s, 0\n", i, tercetos[i].operando1);
@@ -52,7 +53,7 @@ void generarCodigoDesdeTercetos(FILE* f) {
     char tempVar1[50], tempVar2[50], tempResult[50];
     int tempCounter = 0;
     
-    for (int i = 0; i < cant_tercetos; i++) {
+    for (int i = 0; i < indiceTerceto; i++) {
         Terceto t = tercetos[i];
         
         // Comentario con el terceto original
