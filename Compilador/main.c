@@ -2,6 +2,7 @@
 #include "Archivo/Archivo.h"
 #include "Tercetos/Tercetos.h"
 #include "Pila/Pila.h"
+#include "Assembler/Assembler.c"
 
 extern int yyparse();
 extern FILE *yyin;
@@ -68,7 +69,10 @@ int main (int argc, char* argv[])
     yyparse();
     
     imprimirTercetos();
-
+    fclose(ptercetos);
+    
+    generarAssembler("./Outputs/symbol_table.txt", "./Outputs/intermediate-code.txt", "./Outputs/output.asm");
+    
     printf("\nFIN DE LA COMPILACION\n");
     printf("\n");
     printf("Se creo el archivo: %s con todos los tokens.\n", argv[2]);
@@ -80,7 +84,7 @@ int main (int argc, char* argv[])
     fclose(yyin);
     fclose(plexer);
     fclose(pparser);
-    fclose(ptercetos);
+    // fclose(ptercetos);
     fclose(pst);
     fclose(ptemp);
 

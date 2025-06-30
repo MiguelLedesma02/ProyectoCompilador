@@ -46,7 +46,8 @@ void modificarOperadorTerceto(int indice, char* op)
 
 void imprimirTercetos()
 {
-    for (int i = 0; i < indiceTerceto; i++)
+    int i = 0;
+    for (i; i < indiceTerceto; i++)
         fprintf(ptercetos, "[%d] (%s, %s, %s)\n", i, tercetos[i].operador, tercetos[i].operando1, tercetos[i].operando2);
 
     return;

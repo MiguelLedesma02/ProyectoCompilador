@@ -12,8 +12,9 @@ int setTipoDato(FILE *pf, FILE *ptemp, char* tipoDato)
 
     else if(strcmp(tipoDato, "string") == 0)
         strcpy(tipoDato, "CTE_STRING");
-
-    for(int i = 0; i < cantVarEnLinea; i ++)
+    
+    int i = 0;
+    for(i; i < cantVarEnLinea; i ++)
     {
         entrada_ts aux;
 
@@ -67,8 +68,8 @@ int buscarVar(char* var)
     /*Se retorna 0 si la variable no existe.*/
 
     /*var es la variable*/
-
-    for(int i = 0; i < cantVarDeclaradas; i ++)
+    int i = 0;
+    for(i; i < cantVarDeclaradas; i ++)
     {
         if(strcmp(var, varDeclaradas[i]) == 0)
             return 1;
@@ -318,8 +319,8 @@ int esPrimo(int n)
 {
     if(n < 2)
         return 0;
-
-    for(int i = 2; i * i <= n; i ++)
+    int i = 2;
+    for(i; i * i <= n; i ++)
         if (n % i == 0) 
             return 0;
 
