@@ -6,6 +6,7 @@
 #include "../Tercetos/Tercetos.h"
 #include "../Pila/Pila.h"
 
+
 /*VARIABLES GLOBALES*/
 #define MAX_VAR_DECLARADAS 200
 #define MAX_VAR_EN_LINEA 15

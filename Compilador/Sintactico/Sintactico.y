@@ -1,6 +1,7 @@
 %{
 
 #include "Sintactico.h"
+#include "../Assembler/Assembler.c"
 
 /*VARIABLES GLOBALES*/
 extern int yylineno;
@@ -97,6 +98,11 @@ int yyerror(char* descripcion);
 
 programa:
 	variables bloque
+    {
+        imprimirTercetos();
+        fclose(ptercetos);
+        generarAssembler("./Outputs/symbol_table.txt", "./Outputs/intermediate-code.txt", "./Outputs/output.asm");
+    }
     { fprintf(pparser, "1) programa -> variables bloque\n"); }
 	;
 

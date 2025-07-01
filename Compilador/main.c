@@ -2,7 +2,6 @@
 #include "Archivo/Archivo.h"
 #include "Tercetos/Tercetos.h"
 #include "Pila/Pila.h"
-#include "Assembler/Assembler.c"
 
 extern int yyparse();
 extern FILE *yyin;
@@ -67,11 +66,6 @@ int main (int argc, char* argv[])
     printf("\n. . .\n");
     
     yyparse();
-    
-    imprimirTercetos();
-    fclose(ptercetos);
-    
-    generarAssembler("./Outputs/symbol_table.txt", "./Outputs/intermediate-code.txt", "./Outputs/output.asm");
     
     printf("\nFIN DE LA COMPILACION\n");
     printf("\n");

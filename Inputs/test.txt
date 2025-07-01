@@ -1,38 +1,6 @@
 init
 {
-    a: float
-    x, c, r, z, f: int
-    b: string
+    a, b : int
 }
 
-reorder([x+3, 1+1, 9-x], 0, 0)
-
-a := 99999.99
-a := 99.
-a := .9999
- 
-b := "@sdADaSjfla%dfg"
-b := "asldk  fh sjf"
- 
-x := 27 - c
-x := r + 500
-x := 34 * 3
-x := z / f
-
-c := 4
-x := 1
-
-#+ Esto es un comentario +#
- 
-read(x)
- 
-write("ewr")
- 
-x := 1
-r := 1
-c := 2
-
- 
-reorder([x+3, 1+1, 9-x],1,2)
-
-x := sumFirstPrimes(5)
+a := b + 10 * 5
