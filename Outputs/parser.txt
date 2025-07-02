@@ -2,164 +2,18 @@
 6) t_dato -> INT
 5) declaracion -> lista_var : t_dato
 4) declaraciones -> declaracion
-10) lista_var -> ID
-8) t_dato -> FLOAT
-5) declaracion -> lista_var : t_dato
-3) declaraciones -> declaraciones declaracion
-10) lista_var -> ID
-9) lista_var -> lista_var , ID
-9) lista_var -> lista_var , ID
-9) lista_var -> lista_var , ID
-6) t_dato -> INT
-5) declaracion -> lista_var : t_dato
-3) declaraciones -> declaraciones declaracion
-10) lista_var -> ID
-7) t_dato -> STRING
-5) declaracion -> lista_var : t_dato
-3) declaraciones -> declaraciones declaracion
 2) variables -> INIT { declaraciones }
 50) factor -> ID
 49) termino -> factor
 46) expresion -> termino
 51) factor -> CONST_INT
 49) termino -> factor
-44) expresion -> expresion + termino
-31) expresiones -> expresion
-51) factor -> CONST_INT
-49) termino -> factor
 46) expresion -> termino
-51) factor -> CONST_INT
-49) termino -> factor
-44) expresion -> expresion + termino
-30) expresiones -> expresiones , expresion
-51) factor -> CONST_INT
-49) termino -> factor
-46) expresion -> termino
-50) factor -> ID
-49) termino -> factor
-45) expresion -> expresion - termino
-30) expresiones -> expresiones , expresion
-28) reorder -> REORDER ( [ expresiones ] , CONST_INT , CONST_INT )
-18) sentencia -> reorder
-12) bloque -> sentencia
-52) factor -> CONST_FLOAT
-49) termino -> factor
-46) expresion -> termino
-20) asignacion -> ID := expresion
-13) sentencia -> asignacion
-11) bloque -> bloque sentencia
-52) factor -> CONST_FLOAT
-49) termino -> factor
-46) expresion -> termino
-20) asignacion -> ID := expresion
-13) sentencia -> asignacion
-11) bloque -> bloque sentencia
-52) factor -> CONST_FLOAT
-49) termino -> factor
-46) expresion -> termino
-20) asignacion -> ID := expresion
-13) sentencia -> asignacion
-11) bloque -> bloque sentencia
-21) asignacion -> ID := CONST_STRING
-13) sentencia -> asignacion
-11) bloque -> bloque sentencia
-21) asignacion -> ID := CONST_STRING
-13) sentencia -> asignacion
-11) bloque -> bloque sentencia
-51) factor -> CONST_INT
-49) termino -> factor
-46) expresion -> termino
-50) factor -> ID
-49) termino -> factor
-45) expresion -> expresion - termino
-20) asignacion -> ID := expresion
-13) sentencia -> asignacion
-11) bloque -> bloque sentencia
-50) factor -> ID
-49) termino -> factor
-46) expresion -> termino
-51) factor -> CONST_INT
-49) termino -> factor
-44) expresion -> expresion + termino
-20) asignacion -> ID := expresion
-13) sentencia -> asignacion
-11) bloque -> bloque sentencia
-51) factor -> CONST_INT
-49) termino -> factor
-51) factor -> CONST_INT
-47) termino -> termino * factor
-46) expresion -> termino
-20) asignacion -> ID := expresion
-13) sentencia -> asignacion
-11) bloque -> bloque sentencia
-50) factor -> ID
-49) termino -> factor
-50) factor -> ID
-48) termino -> termino / factor
-46) expresion -> termino
-20) asignacion -> ID := expresion
-13) sentencia -> asignacion
-11) bloque -> bloque sentencia
-51) factor -> CONST_INT
-49) termino -> factor
-46) expresion -> termino
-20) asignacion -> ID := expresion
-13) sentencia -> asignacion
-11) bloque -> bloque sentencia
-51) factor -> CONST_INT
-49) termino -> factor
-46) expresion -> termino
-20) asignacion -> ID := expresion
-13) sentencia -> asignacion
-11) bloque -> bloque sentencia
-25) read -> READ ( ID )
-16) sentencia -> read
-11) bloque -> bloque sentencia
+38) condicion -> expresion > expresion
+32) condiciones -> condicion
 27) write -> WRITE ( CONST_STRING )
 17) sentencia -> write
-11) bloque -> bloque sentencia
-51) factor -> CONST_INT
-49) termino -> factor
-46) expresion -> termino
-20) asignacion -> ID := expresion
-13) sentencia -> asignacion
-11) bloque -> bloque sentencia
-51) factor -> CONST_INT
-49) termino -> factor
-46) expresion -> termino
-20) asignacion -> ID := expresion
-13) sentencia -> asignacion
-11) bloque -> bloque sentencia
-51) factor -> CONST_INT
-49) termino -> factor
-46) expresion -> termino
-20) asignacion -> ID := expresion
-13) sentencia -> asignacion
-11) bloque -> bloque sentencia
-50) factor -> ID
-49) termino -> factor
-46) expresion -> termino
-51) factor -> CONST_INT
-49) termino -> factor
-44) expresion -> expresion + termino
-31) expresiones -> expresion
-51) factor -> CONST_INT
-49) termino -> factor
-46) expresion -> termino
-51) factor -> CONST_INT
-49) termino -> factor
-44) expresion -> expresion + termino
-30) expresiones -> expresiones , expresion
-51) factor -> CONST_INT
-49) termino -> factor
-46) expresion -> termino
-50) factor -> ID
-49) termino -> factor
-45) expresion -> expresion - termino
-30) expresiones -> expresiones , expresion
-28) reorder -> REORDER ( [ expresiones ] , CONST_INT , CONST_INT )
-18) sentencia -> reorder
-11) bloque -> bloque sentencia
-29) sumfirstprimes -> ID := SUMFIRSTPRIMES ( CONST_INT )
-19) sentencia -> sumfirstprimes
-11) bloque -> bloque sentencia
+12) bloque -> sentencia
+23) seleccion -> IF ( condiciones ) { bloque }
+15) sentencia -> seleccion
+12) bloque -> sentencia

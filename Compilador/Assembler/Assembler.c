@@ -48,18 +48,23 @@ void clean_identifier(char* dest, const char* src)
     }
 }
 
-const char* resolve_reference(const char* arg) {
+const char* resolve_reference(const char* arg)
+{
     static char buffer[MAX_LONG_STR];
-    if (arg[0] == '[' && arg[strlen(arg)-1] == ']') {
+
+    if (arg[0] == '[' && arg[strlen(arg)-1] == ']')
+    {
         int ref_index;
-        if (sscanf(arg, "[%d]", &ref_index) == 1 && ref_index >= 0 && ref_index < triple_count) {
+        if (sscanf(arg, "[%d]", &ref_index) == 1 && ref_index >= 0 && ref_index < triple_count)
+        {
             sprintf(buffer, "_temp%d", ref_index);
             return buffer;
         }
     }
-    if (strcmp(arg, "_") == 0 || strlen(arg) == 0) {
+
+    if (strcmp(arg, "_") == 0 || strlen(arg) == 0)
         return "";
-    }
+        
     strcpy(buffer, arg);
     return buffer;
 }
@@ -143,6 +148,43 @@ const char* get_symbol_type(const char* name) {
     return NULL;
 }
 
+void generarCodigo(FILE* asm_file)
+{
+    int i;
+
+    for (i = 0; i < triple_count; i++)
+    {
+        char op1[MAX_LONG_ID], op2[MAX_LONG_ID];
+        const char* raw1 = resolve_reference(triples[i].arg1);
+        const char* raw2 = resolve_reference(triples[i].arg2);
+
+        if (strlen(raw1) > 0) clean_identifier(op1, raw1);
+        else strcpy(op1, "");
+        if (strlen(raw2) > 0) clean_identifier(op2, raw2);
+        else strcpy(op2, "");
+
+        if (strcmp(triples[i].op, "+") == 0 || strcmp(triples[i].op, "-") == 0 ||
+            strcmp(triples[i].op, "*") == 0 || strcmp(triples[i].op, "/") == 0) {
+            fprintf(asm_file, "    fld %s\n", op1);
+            if (strcmp(triples[i].op, "+") == 0) fprintf(asm_file, "    fadd %s\n", op2);
+            else if (strcmp(triples[i].op, "-") == 0) fprintf(asm_file, "    fsub %s\n", op2);
+            else if (strcmp(triples[i].op, "*") == 0) fprintf(asm_file, "    fmul %s\n", op2);
+            else fprintf(asm_file, "    fdiv %s\n", op2);
+            char temp[MAX_LONG_ID];
+            sprintf(temp, "_temp%d", i);
+            fprintf(asm_file, "    fstp %s\n", temp);
+        } else if (strcmp(triples[i].op, ":=") == 0) {
+            fprintf(asm_file, "    fld %s\n", op1);
+            fprintf(asm_file, "    fstp %s\n", op2);
+        } else if (strcmp(triples[i].op, "WRITE") == 0) {
+            fprintf(asm_file, "    displayString %s\n", op1);
+            fprintf(asm_file, "    newLine 1\n");
+        } else if (strcmp(triples[i].op, "READ") == 0) {
+            fprintf(asm_file, "    GetFloat %s\n", op1);
+        }
+    }
+}
+
 void generate_assembler(const char* output_filename)
 {
     int i;
@@ -174,7 +216,6 @@ void generate_assembler(const char* output_filename)
             strcmp(symbol_table[i].valor, "-") == 0 ? "?" : symbol_table[i].valor);
     }
 
-    //TODO: Esto está mal. No se tiene que crear una variable por terceto
     //Se colocan todas las variables del compilador
     int temp = 0;
     int orden = 0;
@@ -231,37 +272,7 @@ void generate_assembler(const char* output_filename)
     fprintf(asm_file, ".CODE\nextrn STRLEN:proc, COPIAR:proc, CONCAT:proc\n\nSTART:\n");
     fprintf(asm_file, "    mov AX, @DATA\n    mov DS, AX\n    mov ES, AX\n");
 
-    for (i = 0; i < triple_count; i++)
-    {
-        char op1[MAX_LONG_ID], op2[MAX_LONG_ID];
-        const char* raw1 = resolve_reference(triples[i].arg1);
-        const char* raw2 = resolve_reference(triples[i].arg2);
-
-        if (strlen(raw1) > 0) clean_identifier(op1, raw1);
-        else strcpy(op1, "");
-        if (strlen(raw2) > 0) clean_identifier(op2, raw2);
-        else strcpy(op2, "");
-
-        if (strcmp(triples[i].op, "+") == 0 || strcmp(triples[i].op, "-") == 0 ||
-            strcmp(triples[i].op, "*") == 0 || strcmp(triples[i].op, "/") == 0) {
-            fprintf(asm_file, "    fld %s\n", op1);
-            if (strcmp(triples[i].op, "+") == 0) fprintf(asm_file, "    fadd %s\n", op2);
-            else if (strcmp(triples[i].op, "-") == 0) fprintf(asm_file, "    fsub %s\n", op2);
-            else if (strcmp(triples[i].op, "*") == 0) fprintf(asm_file, "    fmul %s\n", op2);
-            else fprintf(asm_file, "    fdiv %s\n", op2);
-            char temp[MAX_LONG_ID];
-            sprintf(temp, "_temp%d", i);
-            fprintf(asm_file, "    fstp %s\n", temp);
-        } else if (strcmp(triples[i].op, ":=") == 0) {
-            fprintf(asm_file, "    fld %s\n", op1);
-            fprintf(asm_file, "    fstp %s\n", op2);
-        } else if (strcmp(triples[i].op, "WRITE") == 0) {
-            fprintf(asm_file, "    displayString %s\n", op1);
-            fprintf(asm_file, "    newLine 1\n");
-        } else if (strcmp(triples[i].op, "READ") == 0) {
-            fprintf(asm_file, "    GetFloat %s\n", op1);
-        }
-    }
+    generarCodigo(asm_file);
 
     fprintf(asm_file, "    mov ax, 4C00h\n    int 21h\nEND START\n");
 
