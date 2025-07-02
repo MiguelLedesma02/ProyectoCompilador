@@ -1,13 +1,6 @@
 init
 {
-    x, y, z : int
+    x, y, z : string
 }
 
-if (x > 5)
-{
-    x := 2
-    if (y < z)
-    {
-        y := 200
-    }
-}
+write("Hola Mundo!")

@@ -237,6 +237,92 @@ int esEtiqueta(Pila* pilaSaltos, int indice)
     return 0;
 }
 
+int esREAD(int indice)
+{
+    if(strcmp(triples[indice].op, "READ") == 0)
+        return 1;
+
+    return 0;    
+}
+
+int generarREAD(FILE* asm_file, ListaTriples* listaOperandos, int indice)
+{
+    int op1;
+
+    sscanf(triples[indice].arg1, "[%d]", &op1);
+
+    int i;
+    int symbol_tableTAM = 1000;
+    char tipo[30];
+
+    Triple* arg1 = buscarTriplePorIndice(listaOperandos, op1);
+    
+    for(i = 0; i < symbol_tableTAM; i ++)
+    {
+        if (strcmp(symbol_table[i].nombre, arg1->op) == 0)
+        {
+            strcpy(tipo, symbol_table[i].tipoDato);
+            break;
+        }
+    }
+
+    if(strcmp(tipo, "CTE_STRING") == 0)
+        fprintf(asm_file, "    getString %s\n", arg1->op);
+    else
+        fprintf(asm_file, "    GetFloat %s\n", arg1->op);
+
+    fprintf(asm_file, "    newLine\n\n");
+}
+
+int esWRITE(int indice)
+{
+    if(strcmp(triples[indice].op, "WRITE") == 0)
+        return 1;
+
+    return 0;    
+}
+
+void generarWRITE(FILE* asm_file, ListaTriples* listaOperandos, int indice)
+{
+    int op1;
+
+    sscanf(triples[indice].arg1, "[%d]", &op1);
+
+    int i;
+    int symbol_tableTAM = 1000;
+    char tipo[30];
+
+    Triple* arg1 = buscarTriplePorIndice(listaOperandos, op1);
+
+    char aux[100];
+
+    int len = strlen(arg1->op);
+
+    // Validar que tenga al menos dos caracteres y comience y termine con comillas
+    if (len >= 2 && arg1->op[0] == '"' && arg1->op[len - 1] == '"') {
+        strncpy(aux, arg1->op + 1, len - 2);
+        aux[len - 2] = '\0';
+    }
+
+    strcpy(arg1->op, aux);
+
+    for(i = 0; i < symbol_tableTAM; i ++)
+    {
+        if (strcmp(symbol_table[i].nombre, arg1->op) == 0)
+        {
+            strcpy(tipo, symbol_table[i].tipoDato);
+            break;
+        }
+    }
+
+    if(strcmp(tipo, "CTE_STRING") == 0)
+        fprintf(asm_file, "    displayString %s\n", arg1->op);
+    else
+        fprintf(asm_file, "    DisplayFloat %s\n", arg1->op);
+
+    fprintf(asm_file, "    newLine\n\n");
+}
+
 
 void generarAsignacion(FILE* asm_file, ListaTriples* listaOperandos, int indice)
 {
@@ -408,7 +494,13 @@ void generarCodigo(FILE* asm_file)
         if(esSalto(i))
             generarSalto(asm_file, pilaSaltos, pilaEtiquetas, &listaOperandos, i);
 
-        if(!esEtiqueta(pilaSaltos, i) && !esOperador(i) && !esAsignacion(i) && !esComparacion(i) && !esSalto(i))
+        if(esREAD(i))
+            generarREAD(asm_file, &listaOperandos, i);
+
+        if(esWRITE(i))
+            generarWRITE(asm_file, &listaOperandos, i);
+
+        if(!esEtiqueta(pilaSaltos, i) && !esOperador(i) && !esAsignacion(i) && !esComparacion(i) && !esSalto(i) && !esREAD(i) && !esWRITE(i))
             insertarTriple(&listaOperandos, triples[i]);
 
     }
