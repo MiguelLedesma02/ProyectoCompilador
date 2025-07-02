@@ -19,6 +19,23 @@ int symbol_count = 0;
 Triple triples[MAX_TRIPLES];
 int triple_count = 0;
 
+typedef struct NodoLista {
+    Triple triple;
+    struct NodoLista* sig;
+} NodoLista;
+
+typedef struct {
+    NodoLista* cabeza;
+} ListaTriples;
+
+// Funciones públicas
+void inicializarLista(ListaTriples* lista);
+int insertarTriple(ListaTriples* lista, Triple t);
+Triple* buscarTriplePorIndice(ListaTriples* lista, int index);
+int eliminarTriplePorIndice(ListaTriples* lista, int index);
+void mostrarLista(ListaTriples lista);
+void liberarLista(ListaTriples* lista);
+
 void clean_identifier(char* dest, const char* src)
 {
     int i = 0;
@@ -148,70 +165,116 @@ const char* get_symbol_type(const char* name) {
     return NULL;
 }
 
-int generarOperando(FILE* asm_file, int actual)
+int esOperador(int indice)
 {
-    int siguiente = actual;
+    //Retorna 1 si es operador y 0 si no
 
-    if(actual + 1 < triple_count && strcmp(triples[actual + 1].op, ":=") == 0)
-    {
-        fprintf(asm_file, "    fst %s\n", triples[actual].op);
-        fprintf(asm_file, "    ffree\n");
-        
-        siguiente ++;
-    }
-    else
-        fprintf(asm_file, "    fld %s\n", triples[actual].op);
+    if(strcmp(triples[indice].op, "+") == 0)
+        return 1;
+            
+    if(strcmp(triples[indice].op, "-") == 0)
+        return 1;
 
-    return siguiente;
+    if(strcmp(triples[indice].op, "*") == 0)
+        return 1;
+
+    if(strcmp(triples[indice].op, "/") == 0)
+        return 1;
+
+    return 0;
 }
+
+int esAsignacion(int indice)
+{
+    if(strcmp(triples[indice].op, ":=") == 0)
+        return 1;
+    
+    return 0;
+}
+
+void generarAsignacion(FILE* asm_file, ListaTriples* listaOperandos, int indice)
+{
+    int op1;
+
+    sscanf(triples[indice].arg1, "[%d]", &op1);
+
+    Triple* arg1 = buscarTriplePorIndice(listaOperandos, op1);
+
+    fprintf(asm_file, "    fst %s\n", arg1->op);
+    fprintf(asm_file, "    ffree\n");
+
+    return;
+}
+
+void generarOperacion(FILE* asm_file, ListaTriples* listaOperandos, int indice)
+{
+
+    int op1;
+    int op2; 
+
+    sscanf(triples[indice].arg1, "[%d]", &op1);
+    sscanf(triples[indice].arg2, "[%d]", &op2);
+
+    Triple* arg1 = buscarTriplePorIndice(listaOperandos, op1);
+
+    if(arg1 != NULL) 
+        fprintf(asm_file, "    fld %s\n", arg1->op);
+
+    Triple* arg2 = buscarTriplePorIndice(listaOperandos, op2);
+
+    if(arg2 != NULL)
+        fprintf(asm_file, "    fld %s\n", arg2->op);
+
+    if(strcmp(triples[indice].op, "+") == 0)
+    {
+        fprintf(asm_file, "    fadd \n");
+        fprintf(asm_file, "    ffree 1 \n");
+    }
+
+    if(strcmp(triples[indice].op, "-") == 0)
+    {
+        fprintf(asm_file, "    fsub \n");
+        fprintf(asm_file, "    ffree 1 \n");
+    }
+
+    if(strcmp(triples[indice].op, "*") == 0)
+    {
+        fprintf(asm_file, "    fmul \n");
+        fprintf(asm_file, "    ffree 1 \n");
+    }
+
+    if(strcmp(triples[indice].op, "/") == 0)
+    {
+        fprintf(asm_file, "    fdiv \n");
+        fprintf(asm_file, "    ffree 1 \n");
+    }
+
+    return;
+}
+
 
 void generarCodigo(FILE* asm_file)
 {
-    int i;
+    int i, sig;
+
+    ListaTriples listaOperandos;
+    inicializarLista(&listaOperandos);
 
     for (i = 0; i < triple_count; i++)
     {
-        char op1[MAX_LONG_ID], op2[MAX_LONG_ID];
-        const char* raw1 = resolve_reference(triples[i].arg1);
-        const char* raw2 = resolve_reference(triples[i].arg2);
 
-        //Si op no es +, -, *, /, :=, CMP, un salto, READ, WRITE, SFP, es un operando
-        
-        if(strcmp(triples[i].op, "+") == 0)
-        {
-            fprintf(asm_file, "    fadd\n");
-            fprintf(asm_file, "    ffree 1\n");
-        }
-        
-        else if(strcmp(triples[i].op, "-") == 0)
-        {
-            fprintf(asm_file, "    fsub\n");
-            fprintf(asm_file, "    ffree 1\n");
-        }
-        
-        else if(strcmp(triples[i].op, "*") == 0)
-        {
-            fprintf(asm_file, "    fmul\n");
-            fprintf(asm_file, "    ffree 1\n");
-        }
+        if(esOperador(i))
+            generarOperacion(asm_file, &listaOperandos, i);
 
-        else if(strcmp(triples[i].op, "/") == 0)
-        {
-            fprintf(asm_file, "    fdiv\n");
-            fprintf(asm_file, "    ffree 1\n");
-        }
-        
-        else
-            i = generarOperando(asm_file, i);
-        
-        /*
-        else if(strcmp(triples[i].op, "READ"))
-            //TODO: Que genere un READ        
-        
-        else if(strcmp(triples[i].op, "WRITE"))
-            //TODO: Que genere un WRITE
-        */
+        if(esAsignacion(i))
+            generarAsignacion(asm_file, &listaOperandos, i);
+
+        if(!esOperador(i) && !esAsignacion(i))
+            insertarTriple(&listaOperandos, triples[i]);
+
     }
+
+    liberarLista(&listaOperandos);
 }
 
 void generate_assembler(const char* output_filename)
@@ -321,4 +384,68 @@ int generarAssembler(const char* symbol_file, const char* triple_file, const cha
     generate_assembler(output_file);
 
     return 0;
+}
+
+void inicializarLista(ListaTriples* lista) {
+    lista->cabeza = NULL;
+}
+
+int insertarTriple(ListaTriples* lista, Triple t) {
+    NodoLista* nuevo = (NodoLista*)malloc(sizeof(NodoLista));
+    if (!nuevo) return 0; // fallo de memoria
+
+    nuevo->triple = t;
+    nuevo->sig = lista->cabeza;
+    lista->cabeza = nuevo;
+
+    return 1;
+}
+
+Triple* buscarTriplePorIndice(ListaTriples* lista, int index) {
+    NodoLista* actual = lista->cabeza;
+    while (actual != NULL) {
+        if (actual->triple.index == index)
+            return &(actual->triple);
+        actual = actual->sig;
+    }
+    return NULL;
+}
+
+int eliminarTriplePorIndice(ListaTriples* lista, int index) {
+    NodoLista* actual = lista->cabeza;
+    NodoLista* anterior = NULL;
+
+    while (actual != NULL) {
+        if (actual->triple.index == index) {
+            if (anterior == NULL) {
+                lista->cabeza = actual->sig;
+            } else {
+                anterior->sig = actual->sig;
+            }
+            free(actual);
+            return 1; // eliminado con éxito
+        }
+        anterior = actual;
+        actual = actual->sig;
+    }
+    return 0; // no encontrado
+}
+
+void mostrarLista(ListaTriples lista) {
+    NodoLista* actual = lista.cabeza;
+    while (actual != NULL) {
+        printf("[%d] (%s, %s, %s)\n", actual->triple.index,
+               actual->triple.op, actual->triple.arg1, actual->triple.arg2);
+        actual = actual->sig;
+    }
+}
+
+void liberarLista(ListaTriples* lista) {
+    NodoLista* actual = lista->cabeza;
+    while (actual != NULL) {
+        NodoLista* temp = actual;
+        actual = actual->sig;
+        free(temp);
+    }
+    lista->cabeza = NULL;
 }

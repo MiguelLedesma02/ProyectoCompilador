@@ -8,6 +8,11 @@
 46) expresion -> termino
 51) factor -> CONST_INT
 49) termino -> factor
+51) factor -> CONST_INT
+47) termino -> termino * factor
+44) expresion -> expresion + termino
+51) factor -> CONST_INT
+49) termino -> factor
 44) expresion -> expresion + termino
 20) asignacion -> ID := expresion
 13) sentencia -> asignacion
