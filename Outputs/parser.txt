@@ -1,7 +1,5 @@
 10) lista_var -> ID
-9) lista_var -> lista_var , ID
-9) lista_var -> lista_var , ID
-7) t_dato -> STRING
+6) t_dato -> INT
 5) declaracion -> lista_var : t_dato
 4) declaraciones -> declaracion
 2) variables -> INIT { declaraciones }

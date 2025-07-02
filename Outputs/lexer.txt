@@ -1,14 +1,10 @@
 INIT: init
 LLA_AP: {
 ID: x
-COMA: ,
-ID: y
-COMA: ,
-ID: z
 DOS_PUNTOS: :
-STRING: string
+INT: int
 LLA_CL: }
 WRITE: write
 PAR_AP: (
-CONST_STRING: "Hola Mundo!"
+CONST_STRING: "hola"
 PAR_CL: )

@@ -1,6 +1,6 @@
 init
 {
-    x, y, z : string
+    x : int
 }
 
-write("Hola Mundo!")
+write("hola")

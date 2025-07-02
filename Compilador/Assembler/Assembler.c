@@ -57,7 +57,7 @@ void clean_identifier(char* dest, const char* src)
     //Si es un dígito, se le agregan dos guiones bajos
     if (temp[0] >= '0' && temp[0] <= '9')
     {
-        strcpy(dest, "__");
+        strcpy(dest, "_");
         strncat(dest, temp, MAX_LONG_ID - 3);
     }
     //Si es un indentificador, se le agrega solo guión bajo
@@ -267,9 +267,9 @@ int generarREAD(FILE* asm_file, ListaTriples* listaOperandos, int indice)
     }
 
     if(strcmp(tipo, "CTE_STRING") == 0)
-        fprintf(asm_file, "    getString %s\n", arg1->op);
+        fprintf(asm_file, "    getString _%s\n", arg1->op);
     else
-        fprintf(asm_file, "    GetFloat %s\n", arg1->op);
+        fprintf(asm_file, "    GetFloat _%s\n", arg1->op);
 
     fprintf(asm_file, "    newLine\n\n");
 }
@@ -291,34 +291,39 @@ void generarWRITE(FILE* asm_file, ListaTriples* listaOperandos, int indice)
     int i;
     int symbol_tableTAM = 1000;
     char tipo[30];
+    char nombre[100];
 
     Triple* arg1 = buscarTriplePorIndice(listaOperandos, op1);
 
     char aux[100];
+    char auxOp[100];
+
+    strcpy(auxOp, arg1->op);
 
     int len = strlen(arg1->op);
 
     // Validar que tenga al menos dos caracteres y comience y termine con comillas
-    if (len >= 2 && arg1->op[0] == '"' && arg1->op[len - 1] == '"') {
-        strncpy(aux, arg1->op + 1, len - 2);
+    if (len >= 2 && auxOp[0] == '"' && auxOp[len - 1] == '"')
+    {
+        strncpy(aux, auxOp + 1, len - 2);
         aux[len - 2] = '\0';
+        strcpy(arg1->op, aux);
     }
-
-    strcpy(arg1->op, aux);
 
     for(i = 0; i < symbol_tableTAM; i ++)
     {
         if (strcmp(symbol_table[i].nombre, arg1->op) == 0)
-        {
+        {   
             strcpy(tipo, symbol_table[i].tipoDato);
+            strcpy(nombre, symbol_table[i].nombre);
             break;
         }
     }
 
     if(strcmp(tipo, "CTE_STRING") == 0)
-        fprintf(asm_file, "    displayString %s\n", arg1->op);
+        fprintf(asm_file, "    displayString _%s\n", nombre);
     else
-        fprintf(asm_file, "    DisplayFloat %s\n", arg1->op);
+        fprintf(asm_file, "    DisplayFloat _%s\n", nombre);
 
     fprintf(asm_file, "    newLine\n\n");
 }
@@ -337,7 +342,7 @@ void generarAsignacion(FILE* asm_file, ListaTriples* listaOperandos, int indice)
     Triple* arg2 = buscarTriplePorIndice(listaOperandos, op2);
 
     if(arg2 != NULL) 
-        fprintf(asm_file, "    fld %s\n", arg2->op);
+        fprintf(asm_file, "    fld _%s\n", arg2->op);
 
     fprintf(asm_file, "    fst %s\n", arg1->op);
     fprintf(asm_file, "    ffree\n");
@@ -359,12 +364,12 @@ void generarComparacion(FILE* asm_file, ListaTriples* listaOperandos, int indice
     Triple* arg1 = buscarTriplePorIndice(listaOperandos, op1);
 
     if(arg1 != NULL) 
-        fprintf(asm_file, "    fld %s\n", arg1->op);
+        fprintf(asm_file, "    fld _%s\n", arg1->op);
 
     Triple* arg2 = buscarTriplePorIndice(listaOperandos, op2);
 
     if(arg2 != NULL)
-        fprintf(asm_file, "    fld %s\n", arg2->op);
+        fprintf(asm_file, "    fld _%s\n", arg2->op);
 
     fprintf(asm_file, "    fxch \n");
     fprintf(asm_file, "    fcom \n");
@@ -429,12 +434,12 @@ void generarOperacion(FILE* asm_file, ListaTriples* listaOperandos, int indice)
     Triple* arg1 = buscarTriplePorIndice(listaOperandos, op1);
 
     if(arg1 != NULL) 
-        fprintf(asm_file, "    fld %s\n", arg1->op);
+        fprintf(asm_file, "    fld _%s\n", arg1->op);
 
     Triple* arg2 = buscarTriplePorIndice(listaOperandos, op2);
 
     if(arg2 != NULL)
-        fprintf(asm_file, "    fld %s\n", arg2->op);
+        fprintf(asm_file, "    fld _%s\n", arg2->op);
 
     if(strcmp(triples[indice].op, "+") == 0)
     {
