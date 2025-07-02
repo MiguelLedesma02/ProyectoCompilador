@@ -274,6 +274,8 @@ void generarRead(char* id)
     sprintf(op, "[%d]", Eind);
 
     crearTerceto("READ", op, "_");
+
+    return;
 }
 
 void generarWrite(char* str, int string)
@@ -281,11 +283,11 @@ void generarWrite(char* str, int string)
     /* str es la cadena a imprimir*/
     /* Si es string es 1, se agregan comillas, si es 0 no*/
 
-    char op[10];
+    char op[1000];
 
     if(string == 1)
         sprintf(op, "\"%s\"", str);
-    else\
+    else
         sprintf(op, "%s", str);
 
     Eind = crearTerceto(op, "_", "_");
@@ -293,6 +295,8 @@ void generarWrite(char* str, int string)
     sprintf(op, "[%d]", Eind);
 
     crearTerceto("WRITE", op, "_");
+
+    return;
 }
 
 int sumarPrimos(int n)

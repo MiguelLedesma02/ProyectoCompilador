@@ -1,9 +1,6 @@
 init
 {
-    x : int
+    s : string
 }
 
-if (x > 5)
-{
-    write("x")
-}
+write("x es menor que 4")

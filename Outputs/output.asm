@@ -6,9 +6,8 @@ include number.asm
 .STACK 200h
 
 .DATA
-    _x dd ?
-    __5 dd 5
-    _x db 'x', '$'
+    _s db '-', '$'
+    _xesmenorque4 db 'x es menor que 4', '$'
 .CODE
 extrn STRLEN:proc, COPIAR:proc, CONCAT:proc
 
@@ -16,7 +15,7 @@ START:
     mov AX, @DATA
     mov DS, AX
     mov ES, AX
-    displayString __temp4
+    displayString __temp0
     newLine 1
     mov ax, 4C00h
     int 21h

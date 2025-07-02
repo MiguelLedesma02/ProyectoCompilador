@@ -1,18 +1,10 @@
 INIT: init
 LLA_AP: {
-ID: x
+ID: s
 DOS_PUNTOS: :
-INT: int
+STRING: string
 LLA_CL: }
-IF: if
-PAR_AP: (
-ID: x
-OP_MAYOR: >
-CONST_INT: 5
-PAR_CL: )
-LLA_AP: {
 WRITE: write
 PAR_AP: (
-CONST_STRING: "x"
+CONST_STRING: "x es menor que 4"
 PAR_CL: )
-LLA_CL: }

@@ -1,19 +1,8 @@
 10) lista_var -> ID
-6) t_dato -> INT
+7) t_dato -> STRING
 5) declaracion -> lista_var : t_dato
 4) declaraciones -> declaracion
 2) variables -> INIT { declaraciones }
-50) factor -> ID
-49) termino -> factor
-46) expresion -> termino
-51) factor -> CONST_INT
-49) termino -> factor
-46) expresion -> termino
-38) condicion -> expresion > expresion
-32) condiciones -> condicion
 27) write -> WRITE ( CONST_STRING )
 17) sentencia -> write
-12) bloque -> sentencia
-23) seleccion -> IF ( condiciones ) { bloque }
-15) sentencia -> seleccion
 12) bloque -> sentencia
