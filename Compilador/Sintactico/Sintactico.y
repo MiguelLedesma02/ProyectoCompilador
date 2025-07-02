@@ -100,7 +100,10 @@ programa:
 	variables bloque
     {
         imprimirTercetos();
+        fclose(pparser);
         fclose(ptercetos);
+        fclose(pst);
+        fclose(ptemp);
         generarAssembler("./Outputs/symbol_table.txt", "./Outputs/intermediate-code.txt", "./Outputs/output.asm");
     }
     { fprintf(pparser, "1) programa -> variables bloque\n"); }
