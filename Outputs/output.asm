@@ -8,8 +8,7 @@ include number.asm
 .DATA
     _x dd ?
     __5 dd 5
-    __10 dd 10
-    __2 dd 2
+    __50 dd 50
 .CODE
 extrn STRLEN:proc, COPIAR:proc, CONCAT:proc
 
@@ -17,18 +16,18 @@ START:
     mov AX, @DATA
     mov DS, AX
     mov ES, AX
-    fld 10
-    fld 2
-    fmul 
-    ffree 1 
+    fld x
     fld 5
-    fadd 
-    ffree 1 
-    fld 2
-    fadd 
-    ffree 1 
+    fxch 
+    fcom 
+    fstsw ax
+    sahf
+    ffree
+    jle etiq
+    fld 50
     fst x
     ffree
+etiq1
     mov ax, 4C00h
     int 21h
 END START

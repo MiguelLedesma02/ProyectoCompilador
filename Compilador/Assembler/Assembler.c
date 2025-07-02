@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "../Utilitarios/Utilitarios.h"
+#include "../Pila/Pila.h"
 
 #define MAX_LINE 256
 #define MAX_TRIPLES 1000
@@ -192,16 +193,141 @@ int esAsignacion(int indice)
     return 0;
 }
 
+int esComparacion(int indice)
+{
+    if(strcmp(triples[indice].op, "CMP") == 0)
+        return 1;
+    
+    return 0;
+}
+
+int esSalto(int indice)
+{
+    if(strcmp(triples[indice].op, "BGT") == 0)
+        return 1;
+
+    if(strcmp(triples[indice].op, "BGE") == 0)
+        return 1;
+
+    if(strcmp(triples[indice].op, "BLT") == 0)
+        return 1;
+
+    if(strcmp(triples[indice].op, "BLE") == 0)
+        return 1;
+
+    if(strcmp(triples[indice].op, "BEQ") == 0)
+        return 1;
+
+    if(strcmp(triples[indice].op, "BNE") == 0)
+        return 1;
+
+    if(strcmp(triples[indice].op, "BI") == 0)
+        return 1;
+
+    return 0;
+}
+
+int esEtiqueta(Pila* pilaSaltos, int indice)
+{
+    if(!pilaVacia(pilaSaltos) && verTope(pilaSaltos) == triples[indice].index)
+        return 1;
+
+    return 0;
+}
+
+
 void generarAsignacion(FILE* asm_file, ListaTriples* listaOperandos, int indice)
 {
     int op1;
+    int op2;
 
     sscanf(triples[indice].arg1, "[%d]", &op1);
+    sscanf(triples[indice].arg2, "[%d]", &op2);
 
     Triple* arg1 = buscarTriplePorIndice(listaOperandos, op1);
 
+    Triple* arg2 = buscarTriplePorIndice(listaOperandos, op2);
+
+    if(arg2 != NULL) 
+        fprintf(asm_file, "    fld %s\n", arg2->op);
+
     fprintf(asm_file, "    fst %s\n", arg1->op);
     fprintf(asm_file, "    ffree\n");
+
+    return;
+}
+
+void generarComparacion(FILE* asm_file, ListaTriples* listaOperandos, int indice)
+{
+    int op1;
+    int op2; 
+
+    sscanf(triples[indice].arg1, "[%d]", &op1);
+    sscanf(triples[indice].arg2, "[%d]", &op2);
+
+    //TODO: Falta cuando se tienen expresiones en las comparaciones
+    //TODO: Crear siempre una etiqueta aunque nunca se salte por si hay un WHILE
+
+    Triple* arg1 = buscarTriplePorIndice(listaOperandos, op1);
+
+    if(arg1 != NULL) 
+        fprintf(asm_file, "    fld %s\n", arg1->op);
+
+    Triple* arg2 = buscarTriplePorIndice(listaOperandos, op2);
+
+    if(arg2 != NULL)
+        fprintf(asm_file, "    fld %s\n", arg2->op);
+
+    fprintf(asm_file, "    fxch \n");
+    fprintf(asm_file, "    fcom \n");
+    fprintf(asm_file, "    fstsw ax\n");
+    fprintf(asm_file, "    sahf\n");
+    fprintf(asm_file, "    ffree\n");
+
+    return;
+}
+
+void generarSalto(FILE* asm_file, Pila* pilaSaltos, ListaTriples* listaOperandos, int indice)
+{
+    int salto;
+
+    sscanf(triples[indice].arg1, "[%d]", &salto);
+
+    apilar(pilaSaltos, salto);
+
+    if(strcmp(triples[indice].op, "BGT") == 0)
+        fprintf(asm_file, "    jg etiq\n");
+    
+    if(strcmp(triples[indice].op, "BGE") == 0)
+        fprintf(asm_file, "    jge etiq\n");
+    
+    if(strcmp(triples[indice].op, "BLT") == 0)
+        fprintf(asm_file, "    jl etiq\n");
+
+    if(strcmp(triples[indice].op, "BLE") == 0)
+        fprintf(asm_file, "    jle etiq\n");
+
+    if(strcmp(triples[indice].op, "BEQ") == 0)
+        fprintf(asm_file, "    je etiq\n");
+
+    if(strcmp(triples[indice].op, "BNE") == 0)
+        fprintf(asm_file, "    jne etiq\n");
+
+    if(strcmp(triples[indice].op, "BI") == 0)
+        fprintf(asm_file, "    jmp etiq\n");
+
+    return;
+}
+
+void generarEtiqueta(FILE* asm_file, Pila* pilaSaltos, ListaTriples* listaOperandos)
+{
+    static int etiquetas = 1;
+
+    desapilar(pilaSaltos);
+
+    fprintf(asm_file, "etiq%d\n", etiquetas);
+
+    etiquetas ++;
 
     return;
 }
@@ -257,11 +383,17 @@ void generarCodigo(FILE* asm_file)
 {
     int i, sig;
 
+    Pila* pilaSaltos;
     ListaTriples listaOperandos;
+
+    pilaSaltos = crearPila();
     inicializarLista(&listaOperandos);
 
     for (i = 0; i < triple_count; i++)
     {
+
+        if(esEtiqueta(pilaSaltos, i))
+            generarEtiqueta(asm_file, pilaSaltos, &listaOperandos);
 
         if(esOperador(i))
             generarOperacion(asm_file, &listaOperandos, i);
@@ -269,11 +401,21 @@ void generarCodigo(FILE* asm_file)
         if(esAsignacion(i))
             generarAsignacion(asm_file, &listaOperandos, i);
 
-        if(!esOperador(i) && !esAsignacion(i))
+        if(esComparacion(i))
+            generarComparacion(asm_file, &listaOperandos, i);
+
+        if(esSalto(i))
+            generarSalto(asm_file, pilaSaltos, &listaOperandos, i);
+
+        if(!esEtiqueta(pilaSaltos, i) && !esOperador(i) && !esAsignacion(i) && !esComparacion(i) && !esSalto(i))
             insertarTriple(&listaOperandos, triples[i]);
 
     }
 
+    if(!pilaVacia(pilaSaltos))
+        generarEtiqueta(asm_file, pilaSaltos, &listaOperandos);
+
+    destruirPila(pilaSaltos);
     liberarLista(&listaOperandos);
 }
 
