@@ -7,8 +7,11 @@ include number.asm
 
 .DATA
     _x dd ?
+    _y dd ?
+    _z dd ?
     __5 dd 5
-    __50 dd 50
+    __2 dd 2
+    __200 dd 200
 .CODE
 extrn STRLEN:proc, COPIAR:proc, CONCAT:proc
 
@@ -23,10 +26,22 @@ START:
     fstsw ax
     sahf
     ffree
-    jle etiq
-    fld 50
+    jle etiq1
+    fld 2
     fst x
     ffree
+    fld y
+    fld z
+    fxch 
+    fcom 
+    fstsw ax
+    sahf
+    ffree
+    jge etiq2
+    fld 200
+    fst y
+    ffree
+etiq2
 etiq1
     mov ax, 4C00h
     int 21h

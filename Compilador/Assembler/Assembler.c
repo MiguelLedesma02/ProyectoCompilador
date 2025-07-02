@@ -37,6 +37,8 @@ int eliminarTriplePorIndice(ListaTriples* lista, int index);
 void mostrarLista(ListaTriples lista);
 void liberarLista(ListaTriples* lista);
 
+static int etiquetas = 1;
+
 void clean_identifier(char* dest, const char* src)
 {
     int i = 0;
@@ -287,47 +289,44 @@ void generarComparacion(FILE* asm_file, ListaTriples* listaOperandos, int indice
     return;
 }
 
-void generarSalto(FILE* asm_file, Pila* pilaSaltos, ListaTriples* listaOperandos, int indice)
+void generarSalto(FILE* asm_file, Pila* pilaSaltos, Pila* pilaEtiquetas, ListaTriples* listaOperandos, int indice)
 {
     int salto;
 
     sscanf(triples[indice].arg1, "[%d]", &salto);
 
     apilar(pilaSaltos, salto);
+    apilar(pilaEtiquetas, etiquetas);
 
     if(strcmp(triples[indice].op, "BGT") == 0)
-        fprintf(asm_file, "    jg etiq\n");
+        fprintf(asm_file, "    jg etiq%d\n", etiquetas);
     
     if(strcmp(triples[indice].op, "BGE") == 0)
-        fprintf(asm_file, "    jge etiq\n");
+        fprintf(asm_file, "    jge etiq%d\n", etiquetas);
     
     if(strcmp(triples[indice].op, "BLT") == 0)
-        fprintf(asm_file, "    jl etiq\n");
+        fprintf(asm_file, "    jl etiq%d\n", etiquetas);
 
     if(strcmp(triples[indice].op, "BLE") == 0)
-        fprintf(asm_file, "    jle etiq\n");
+        fprintf(asm_file, "    jle etiq%d\n", etiquetas);
 
     if(strcmp(triples[indice].op, "BEQ") == 0)
-        fprintf(asm_file, "    je etiq\n");
+        fprintf(asm_file, "    je etiq%d\n", etiquetas);
 
     if(strcmp(triples[indice].op, "BNE") == 0)
-        fprintf(asm_file, "    jne etiq\n");
+        fprintf(asm_file, "    jne etiq%d\n", etiquetas);
 
     if(strcmp(triples[indice].op, "BI") == 0)
-        fprintf(asm_file, "    jmp etiq\n");
+        fprintf(asm_file, "    jmp etiq%d\n", etiquetas);
+
+    etiquetas ++;
 
     return;
 }
 
-void generarEtiqueta(FILE* asm_file, Pila* pilaSaltos, ListaTriples* listaOperandos)
+void generarEtiqueta(FILE* asm_file, Pila* pilaEtiquetas, ListaTriples* listaOperandos)
 {
-    static int etiquetas = 1;
-
-    desapilar(pilaSaltos);
-
-    fprintf(asm_file, "etiq%d\n", etiquetas);
-
-    etiquetas ++;
+    fprintf(asm_file, "etiq%d\n", desapilar(pilaEtiquetas));
 
     return;
 }
@@ -384,16 +383,18 @@ void generarCodigo(FILE* asm_file)
     int i, sig;
 
     Pila* pilaSaltos;
+    Pila* pilaEtiquetas;
     ListaTriples listaOperandos;
 
     pilaSaltos = crearPila();
+    pilaEtiquetas = crearPila();
     inicializarLista(&listaOperandos);
 
     for (i = 0; i < triple_count; i++)
     {
 
         if(esEtiqueta(pilaSaltos, i))
-            generarEtiqueta(asm_file, pilaSaltos, &listaOperandos);
+            generarEtiqueta(asm_file, pilaEtiquetas, &listaOperandos);
 
         if(esOperador(i))
             generarOperacion(asm_file, &listaOperandos, i);
@@ -405,17 +406,18 @@ void generarCodigo(FILE* asm_file)
             generarComparacion(asm_file, &listaOperandos, i);
 
         if(esSalto(i))
-            generarSalto(asm_file, pilaSaltos, &listaOperandos, i);
+            generarSalto(asm_file, pilaSaltos, pilaEtiquetas, &listaOperandos, i);
 
         if(!esEtiqueta(pilaSaltos, i) && !esOperador(i) && !esAsignacion(i) && !esComparacion(i) && !esSalto(i))
             insertarTriple(&listaOperandos, triples[i]);
 
     }
 
-    if(!pilaVacia(pilaSaltos))
-        generarEtiqueta(asm_file, pilaSaltos, &listaOperandos);
-
+    while(!pilaVacia(pilaEtiquetas))
+        generarEtiqueta(asm_file, pilaEtiquetas, &listaOperandos);
+    
     destruirPila(pilaSaltos);
+    destruirPila(pilaEtiquetas);
     liberarLista(&listaOperandos);
 }
 

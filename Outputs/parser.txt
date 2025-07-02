@@ -1,4 +1,6 @@
 10) lista_var -> ID
+9) lista_var -> lista_var , ID
+9) lista_var -> lista_var , ID
 6) t_dato -> INT
 5) declaracion -> lista_var : t_dato
 4) declaraciones -> declaracion
@@ -17,6 +19,23 @@
 20) asignacion -> ID := expresion
 13) sentencia -> asignacion
 12) bloque -> sentencia
+50) factor -> ID
+49) termino -> factor
+46) expresion -> termino
+50) factor -> ID
+49) termino -> factor
+46) expresion -> termino
+40) condicion -> expresion < expresion
+32) condiciones -> condicion
+51) factor -> CONST_INT
+49) termino -> factor
+46) expresion -> termino
+20) asignacion -> ID := expresion
+13) sentencia -> asignacion
+12) bloque -> sentencia
+23) seleccion -> IF ( condiciones ) { bloque }
+15) sentencia -> seleccion
+11) bloque -> bloque sentencia
 23) seleccion -> IF ( condiciones ) { bloque }
 15) sentencia -> seleccion
 12) bloque -> sentencia

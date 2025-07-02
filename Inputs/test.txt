@@ -1,9 +1,13 @@
 init
 {
-    x : int
+    x, y, z : int
 }
 
 if (x > 5)
 {
-    x := 50
+    x := 2
+    if (y < z)
+    {
+        y := 200
+    }
 }
