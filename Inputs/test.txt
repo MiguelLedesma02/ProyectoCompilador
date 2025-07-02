@@ -1,6 +1,6 @@
 init
 {
-    s : string
+    x : int
 }
 
-write("x es menor que 4")
+x := 5 + 10

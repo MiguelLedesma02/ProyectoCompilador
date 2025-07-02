@@ -1,10 +1,11 @@
 INIT: init
 LLA_AP: {
-ID: s
+ID: x
 DOS_PUNTOS: :
-STRING: string
+INT: int
 LLA_CL: }
-WRITE: write
-PAR_AP: (
-CONST_STRING: "x es menor que 4"
-PAR_CL: )
+ID: x
+OP_ASIG: :=
+CONST_INT: 5
+OP_SUMA: +
+CONST_INT: 10

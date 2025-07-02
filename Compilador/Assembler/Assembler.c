@@ -8,7 +8,7 @@
 
 // Estructura para los tercetos
 typedef struct {
-    char op[MAX_LONG_ID];
+    char op[MAX_LONG_STR];
     char arg1[MAX_LONG_STR];
     char arg2[MAX_LONG_STR];
     int index;
@@ -148,6 +148,23 @@ const char* get_symbol_type(const char* name) {
     return NULL;
 }
 
+int generarOperando(FILE* asm_file, int actual)
+{
+    int siguiente = actual;
+
+    if(actual + 1 < triple_count && strcmp(triples[actual + 1].op, ":=") == 0)
+    {
+        fprintf(asm_file, "    fst %s\n", triples[actual].op);
+        fprintf(asm_file, "    ffree\n");
+        
+        siguiente ++;
+    }
+    else
+        fprintf(asm_file, "    fld %s\n", triples[actual].op);
+
+    return siguiente;
+}
+
 void generarCodigo(FILE* asm_file)
 {
     int i;
@@ -158,30 +175,42 @@ void generarCodigo(FILE* asm_file)
         const char* raw1 = resolve_reference(triples[i].arg1);
         const char* raw2 = resolve_reference(triples[i].arg2);
 
-        if (strlen(raw1) > 0) clean_identifier(op1, raw1);
-        else strcpy(op1, "");
-        if (strlen(raw2) > 0) clean_identifier(op2, raw2);
-        else strcpy(op2, "");
-
-        if (strcmp(triples[i].op, "+") == 0 || strcmp(triples[i].op, "-") == 0 ||
-            strcmp(triples[i].op, "*") == 0 || strcmp(triples[i].op, "/") == 0) {
-            fprintf(asm_file, "    fld %s\n", op1);
-            if (strcmp(triples[i].op, "+") == 0) fprintf(asm_file, "    fadd %s\n", op2);
-            else if (strcmp(triples[i].op, "-") == 0) fprintf(asm_file, "    fsub %s\n", op2);
-            else if (strcmp(triples[i].op, "*") == 0) fprintf(asm_file, "    fmul %s\n", op2);
-            else fprintf(asm_file, "    fdiv %s\n", op2);
-            char temp[MAX_LONG_ID];
-            sprintf(temp, "_temp%d", i);
-            fprintf(asm_file, "    fstp %s\n", temp);
-        } else if (strcmp(triples[i].op, ":=") == 0) {
-            fprintf(asm_file, "    fld %s\n", op1);
-            fprintf(asm_file, "    fstp %s\n", op2);
-        } else if (strcmp(triples[i].op, "WRITE") == 0) {
-            fprintf(asm_file, "    displayString %s\n", op1);
-            fprintf(asm_file, "    newLine 1\n");
-        } else if (strcmp(triples[i].op, "READ") == 0) {
-            fprintf(asm_file, "    GetFloat %s\n", op1);
+        //Si op no es +, -, *, /, :=, CMP, un salto, READ, WRITE, SFP, es un operando
+        
+        if(strcmp(triples[i].op, "+") == 0)
+        {
+            fprintf(asm_file, "    fadd\n");
+            fprintf(asm_file, "    ffree 1\n");
         }
+        
+        else if(strcmp(triples[i].op, "-") == 0)
+        {
+            fprintf(asm_file, "    fsub\n");
+            fprintf(asm_file, "    ffree 1\n");
+        }
+        
+        else if(strcmp(triples[i].op, "*") == 0)
+        {
+            fprintf(asm_file, "    fmul\n");
+            fprintf(asm_file, "    ffree 1\n");
+        }
+
+        else if(strcmp(triples[i].op, "/") == 0)
+        {
+            fprintf(asm_file, "    fdiv\n");
+            fprintf(asm_file, "    ffree 1\n");
+        }
+        
+        else
+            i = generarOperando(asm_file, i);
+        
+        /*
+        else if(strcmp(triples[i].op, "READ"))
+            //TODO: Que genere un READ        
+        
+        else if(strcmp(triples[i].op, "WRITE"))
+            //TODO: Que genere un WRITE
+        */
     }
 }
 
