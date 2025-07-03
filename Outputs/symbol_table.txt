@@ -1,0 +1,28 @@
+a|CTE_FLOAT|-|1
+x|CTE_INTEGER|-|1
+c|CTE_INTEGER|-|1
+r|CTE_INTEGER|-|1
+z|CTE_INTEGER|-|1
+f|CTE_INTEGER|-|1
+b|CTE_STRING|-|1
+99999.99|CTE_FLOAT|99999.99|8
+99.|CTE_FLOAT|99.|3
+.9999|CTE_FLOAT|.9999|5
+@sdADaSjfla%dfg|CTE_STRING|@sdADaSjfla%dfg|15
+asldk  fh sjf|CTE_STRING|asldk  fh sjf|13
+27|CTE_INTEGER|27|2
+500|CTE_INTEGER|500|3
+34|CTE_INTEGER|34|2
+3|CTE_INTEGER|3|1
+c es mas grande que x|CTE_STRING|c es mas grande que x|21
+c es mas chico o igual a x|CTE_STRING|c es mas chico o igual a x|26
+4|CTE_INTEGER|4|1
+1|CTE_INTEGER|1|1
+c es mas grande que x|CTE_STRING|c es mas grande que x|21
+ewr|CTE_STRING|ewr|3
+2|CTE_INTEGER|2|1
+x es mas grande que b y c es mCTE_STRING|CTE_STRING|x es mas grande que b y c es mas grande que x|45
+x es mas grande que r o c es mCTE_STRING|CTE_STRING|x es mas grande que r o c es mas grande que x|45
+x no es mas grande que r|CTE_STRING|x no es mas grande que r|24
+9|CTE_INTEGER|9|1
+5|CTE_INTEGER|5|1

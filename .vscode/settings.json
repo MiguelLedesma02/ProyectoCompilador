@@ -1,0 +1,9 @@
+{
+    "files.associations": {
+        "utilitarios.h": "c",
+        "tercetos.h": "c",
+        "pila.h": "c",
+        "string.h": "c",
+        "archivo.h": "c"
+    }
+}
