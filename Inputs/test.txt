@@ -3,4 +3,9 @@ init
     x : int
 }
 
-write("hola")
+x := 5
+
+while( x < 10 OR x > 4 )
+{
+    write(x)
+}

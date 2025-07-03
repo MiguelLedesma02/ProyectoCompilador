@@ -29,6 +29,25 @@ typedef struct {
     NodoLista* cabeza;
 } ListaTriples;
 
+typedef struct NodoEntero {
+    int dato;
+    struct NodoEntero* siguiente;
+} NodoEntero;
+
+typedef struct {
+    NodoEntero* cabeza;
+    int tamanio;
+} ListaEntero;
+
+void EnteroCrearLista(ListaEntero* lista);
+void EnteroInsertarAlFinal(ListaEntero* lista, int valor);
+void EnteroEliminarValor(ListaEntero* lista, int valor);
+int  EnteroObtenerElemento(ListaEntero* lista, int indice);
+int  EnteroObtenerTamanio(ListaEntero* lista);
+void EnteroMostrarLista(ListaEntero* lista);
+void EnteroLiberarLista(ListaEntero* lista);
+int EnteroExisteValor(ListaEntero* lista, int valor);
+
 // Funciones públicas
 void inicializarLista(ListaTriples* lista);
 int insertarTriple(ListaTriples* lista, Triple t);
@@ -344,7 +363,7 @@ void generarAsignacion(FILE* asm_file, ListaTriples* listaOperandos, int indice)
     if(arg2 != NULL) 
         fprintf(asm_file, "    fld _%s\n", arg2->op);
 
-    fprintf(asm_file, "    fst %s\n", arg1->op);
+    fprintf(asm_file, "    fst _%s\n", arg1->op);
     fprintf(asm_file, "    ffree\n");
 
     return;
@@ -380,7 +399,7 @@ void generarComparacion(FILE* asm_file, ListaTriples* listaOperandos, int indice
     return;
 }
 
-void generarSalto(FILE* asm_file, Pila* pilaSaltos, Pila* pilaEtiquetas, ListaTriples* listaOperandos, int indice)
+void generarSalto(FILE* asm_file, Pila* pilaSaltos, Pila* pilaEtiquetas, Pila* pilaEtiquetasBucle, ListaTriples* listaOperandos, int indice)
 {
     int salto;
 
@@ -408,7 +427,18 @@ void generarSalto(FILE* asm_file, Pila* pilaSaltos, Pila* pilaEtiquetas, ListaTr
         fprintf(asm_file, "    jne etiq%d\n", etiquetas);
 
     if(strcmp(triples[indice].op, "BI") == 0)
-        fprintf(asm_file, "    jmp etiq%d\n", etiquetas);
+    {
+        
+        if(triples[indice].index > salto)
+        {
+            fprintf(asm_file, "    jmp etiq%d\n", desapilar(pilaEtiquetasBucle));
+        }
+        else
+        {
+            fprintf(asm_file, "    jmp etiq%d\n", etiquetas);
+        }
+
+    }
 
     etiquetas ++;
 
@@ -418,6 +448,13 @@ void generarSalto(FILE* asm_file, Pila* pilaSaltos, Pila* pilaEtiquetas, ListaTr
 void generarEtiqueta(FILE* asm_file, Pila* pilaEtiquetas, ListaTriples* listaOperandos)
 {
     fprintf(asm_file, "etiq%d\n", desapilar(pilaEtiquetas));
+
+    return;
+}
+
+void generarEtiquetaBucle(FILE* asm_file, int index)
+{
+    fprintf(asm_file, "etiq%d\n", index);
 
     return;
 }
@@ -468,6 +505,26 @@ void generarOperacion(FILE* asm_file, ListaTriples* listaOperandos, int indice)
     return;
 }
 
+void obtenerSaltosBucles(ListaEntero* listaBucles)
+{
+    int i;
+
+    for (i = 0; i < triple_count; i ++)
+    {
+        if(strcmp(triples[i].op, "BI") == 0)
+        {
+            int salto;
+
+            sscanf(triples[i].arg1, "[%d]", &salto);
+
+            if (salto < triples[i].index)
+            {
+                EnteroInsertarAlFinal(listaBucles, salto);
+            }
+        } 
+    }
+}
+
 
 void generarCodigo(FILE* asm_file)
 {
@@ -475,14 +532,26 @@ void generarCodigo(FILE* asm_file)
 
     Pila* pilaSaltos;
     Pila* pilaEtiquetas;
+    Pila* pilaEtiquetasBucle;
     ListaTriples listaOperandos;
+    ListaEntero listaBucles;
 
     pilaSaltos = crearPila();
     pilaEtiquetas = crearPila();
+    pilaEtiquetasBucle = crearPila();
+    EnteroCrearLista(&listaBucles);
     inicializarLista(&listaOperandos);
+
+    obtenerSaltosBucles(&listaBucles);
 
     for (i = 0; i < triple_count; i++)
     {
+        if (EnteroExisteValor(&listaBucles, triples[i].index))
+        {
+            generarEtiquetaBucle(asm_file, etiquetas);
+            apilar(pilaEtiquetasBucle, etiquetas);
+            etiquetas ++;
+        }
 
         if(esEtiqueta(pilaSaltos, i))
             generarEtiqueta(asm_file, pilaEtiquetas, &listaOperandos);
@@ -497,7 +566,7 @@ void generarCodigo(FILE* asm_file)
             generarComparacion(asm_file, &listaOperandos, i);
 
         if(esSalto(i))
-            generarSalto(asm_file, pilaSaltos, pilaEtiquetas, &listaOperandos, i);
+            generarSalto(asm_file, pilaSaltos, pilaEtiquetas, pilaEtiquetasBucle, &listaOperandos, i);
 
         if(esREAD(i))
             generarREAD(asm_file, &listaOperandos, i);
@@ -515,7 +584,9 @@ void generarCodigo(FILE* asm_file)
     
     destruirPila(pilaSaltos);
     destruirPila(pilaEtiquetas);
+    destruirPila(pilaEtiquetasBucle);
     liberarLista(&listaOperandos);
+    EnteroLiberarLista(&listaBucles);
 }
 
 void generate_assembler(const char* output_filename)
@@ -689,4 +760,95 @@ void liberarLista(ListaTriples* lista) {
         free(temp);
     }
     lista->cabeza = NULL;
+}
+
+void EnteroCrearLista(ListaEntero* lista) {
+    lista->cabeza = NULL;
+    lista->tamanio = 0;
+}
+
+void EnteroInsertarAlFinal(ListaEntero* lista, int valor) {
+    NodoEntero* nuevo = (NodoEntero*)malloc(sizeof(NodoEntero));
+    nuevo->dato = valor;
+    nuevo->siguiente = NULL;
+
+    if (lista->cabeza == NULL) {
+        lista->cabeza = nuevo;
+    } else {
+        NodoEntero* actual = lista->cabeza;
+        while (actual->siguiente != NULL)
+            actual = actual->siguiente;
+        actual->siguiente = nuevo;
+    }
+
+    lista->tamanio++;
+}
+
+void EnteroEliminarValor(ListaEntero* lista, int valor) {
+    NodoEntero* actual = lista->cabeza;
+    NodoEntero* anterior = NULL;
+
+    while (actual != NULL && actual->dato != valor) {
+        anterior = actual;
+        actual = actual->siguiente;
+    }
+
+    if (actual == NULL) return;
+
+    if (anterior == NULL) {
+        lista->cabeza = actual->siguiente;
+    } else {
+        anterior->siguiente = actual->siguiente;
+    }
+
+    free(actual);
+    lista->tamanio--;
+}
+
+int EnteroObtenerElemento(ListaEntero* lista, int indice) {
+    if (indice < 0 || indice >= lista->tamanio) return -1;
+
+    NodoEntero* actual = lista->cabeza;
+    for (int i = 0; i < indice; i++)
+        actual = actual->siguiente;
+
+    return actual->dato;
+}
+
+int EnteroObtenerTamanio(ListaEntero* lista) {
+    return lista->tamanio;
+}
+
+void EnteroMostrarLista(ListaEntero* lista) {
+    NodoEntero* actual = lista->cabeza;
+    printf("[");
+    while (actual != NULL) {
+        printf("%d", actual->dato);
+        if (actual->siguiente != NULL) printf(", ");
+        actual = actual->siguiente;
+    }
+    printf("]\n");
+}
+
+void EnteroLiberarLista(ListaEntero* lista) {
+    NodoEntero* actual = lista->cabeza;
+    while (actual != NULL) {
+        NodoEntero* siguiente = actual->siguiente;
+        free(actual);
+        actual = siguiente;
+    }
+    lista->cabeza = NULL;
+    lista->tamanio = 0;
+}
+
+int EnteroExisteValor(ListaEntero* lista, int valor) {
+    NodoEntero* actual = lista->cabeza;
+
+    while (actual != NULL) {
+        if (actual->dato == valor)
+            return 1; // Verdadero: el valor existe
+        actual = actual->siguiente;
+    }
+
+    return 0; // Falso: no se encontró el valor
 }

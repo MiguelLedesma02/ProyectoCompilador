@@ -104,7 +104,7 @@ programa:
         fclose(ptercetos);
         fclose(pst);
         fclose(ptemp);
-        generarAssembler("./Outputs/symbol_table.txt", "./Outputs/intermediate-code.txt", "./Outputs/output.asm");
+        generarAssembler("./Outputs/symbol_table.txt", "./Outputs/intermediate-code.txt", "./Outputs/Final.asm");
     }
     { fprintf(pparser, "1) programa -> variables bloque\n"); }
 	;
