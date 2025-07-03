@@ -304,6 +304,17 @@ int esWRITE(int indice)
     return 0;    
 }
 
+void eliminarEspacios(char* src, char* dest) {
+    while (*src != '\0') {
+        if (*src != ' ') {
+            *dest = *src;
+            dest++;
+        }
+        src++;
+    }
+    *dest = '\0';
+}
+
 void generarWRITE(FILE* asm_file, ListaTriples* listaOperandos, int indice)
 {
     // int op1;
@@ -387,13 +398,18 @@ void generarWRITE(FILE* asm_file, ListaTriples* listaOperandos, int indice)
         }
     }
 
-    if (strcmp(tipo, "CTE_STRING") == 0)
-        fprintf(asm_file, "    displayString _%s\n", nombre);
+    if (strcmp(tipo, "CTE_STRING") == 0) {
+    char nombreSinEspacios[256];
+    eliminarEspacios(nombre, nombreSinEspacios);
+    fprintf(asm_file, "    displayString _%s\n", nombreSinEspacios);
+    }
     else
         fprintf(asm_file, "    DisplayFloat _%s\n", nombre);
 
     fprintf(asm_file, "    newLine\n\n");
 }
+
+
 
 int esDestinoEtiquetaDeSalto(int destino)
 {
