@@ -315,56 +315,26 @@ void eliminarEspacios(char* src, char* dest) {
     *dest = '\0';
 }
 
+int esDestinoEtiquetaDeSalto(int destino)
+{
+    int i = 0;
+    for (i; i < triple_count; i++) {
+        if (esSalto(i)) {
+            int salto = -1;
+            if (sscanf(triples[i].arg1, "[%d]", &salto) == 1) {
+                if (salto == destino) {
+                    return triples[i].index; // índice del terceto salto que apunta a 'destino'
+                }
+            }
+        }
+    }
+    return 0; // No es destino de salto
+}
+
 void generarWRITE(FILE* asm_file, ListaTriples* listaOperandos, int indice)
 {
-    // int op1;
+    static int etiquetaImprimidaAnterior = -1; // para evitar imprimir etiqueta duplicada
 
-    // sscanf(triples[indice].arg1, "[%d]", &op1);
-
-    // int i;
-    // int symbol_tableTAM = 1000;
-    // char tipo[30];
-    // char nombre[100];
-
-    // Triple* arg1 = buscarTriplePorIndice(listaOperandos, op1);
-
-    // char aux[100];
-    // char auxOp[100];
-
-    // strcpy(auxOp, arg1->op);
-
-    // int len = strlen(arg1->op);
-
-    // // Validar que tenga al menos dos caracteres y comience y termine con comillas
-    // if (len >= 2 && auxOp[0] == '"' && auxOp[len - 1] == '"')
-    // {
-    //     strncpy(aux, auxOp + 1, len - 2);
-    //     aux[len - 2] = '\0';
-    //     strcpy(arg1->op, aux);
-    // }
-
-    // for(i = 0; i < symbol_tableTAM; i ++)
-    // {
-    //     if (strcmp(symbol_table[i].nombre, arg1->op) == 0)
-    //     {   
-    //         strcpy(tipo, symbol_table[i].tipoDato);
-    //         strcpy(nombre, symbol_table[i].nombre);
-    //         break;
-    //     }
-    // }
-
-    // // 🔧 Agregado: si esta instrucción es parte de un OR (viene después de BLE), hay que imprimir la etiqueta
-    // if (esParteDeOR(indice - 1)) {
-    //     fprintf(asm_file, "etiq%d:\n", triples[indice].index);
-    // }
-
-    // if(strcmp(tipo, "CTE_STRING") == 0)
-    //     fprintf(asm_file, "    displayString _%s\n", nombre);
-    // else
-    //     fprintf(asm_file, "    DisplayFloat _%s\n", nombre);
-
-    // fprintf(asm_file, "    newLine\n\n");
-   static int etiquetaImprimidaAnterior = -1; // para evitar imprimir etiqueta duplicada
     int etiqueta = esDestinoEtiquetaDeSalto(triples[indice].index);
 
     if (etiqueta > 0 && etiqueta != etiquetaImprimidaAnterior) {
@@ -407,24 +377,6 @@ void generarWRITE(FILE* asm_file, ListaTriples* listaOperandos, int indice)
         fprintf(asm_file, "    DisplayFloat _%s\n", nombre);
 
     fprintf(asm_file, "    newLine\n\n");
-}
-
-
-
-int esDestinoEtiquetaDeSalto(int destino)
-{
-    int i = 0;
-    for (i; i < triple_count; i++) {
-        if (esSalto(i)) {
-            int salto = -1;
-            if (sscanf(triples[i].arg1, "[%d]", &salto) == 1) {
-                if (salto == destino) {
-                    return triples[i].index; // índice del terceto salto que apunta a 'destino'
-                }
-            }
-        }
-    }
-    return 0; // No es destino de salto
 }
 
 int esDestinoEtiquetaDeBLE(int destino) {
