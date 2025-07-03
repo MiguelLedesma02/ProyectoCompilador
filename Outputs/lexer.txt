@@ -22,4 +22,9 @@ WRITE: write
 PAR_AP: (
 ID: x
 PAR_CL: )
+ID: x
+OP_ASIG: :=
+ID: x
+OP_SUMA: +
+CONST_INT: 1
 LLA_CL: }

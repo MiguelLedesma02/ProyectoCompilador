@@ -8,4 +8,5 @@ x := 5
 while( x < 10 OR x > 4 )
 {
     write(x)
+    x := x + 1
 }

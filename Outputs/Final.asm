@@ -10,6 +10,7 @@ include number.asm
     _5 dd 5
     _10 dd 10
     _4 dd 4
+    _1 dd 1
 .CODE
 extrn STRLEN:proc, COPIAR:proc, CONCAT:proc
 
@@ -20,7 +21,8 @@ START:
     fld _5
     fst _x
     ffree
-etiq1
+etiq3:
+etiq1:
     fld _x
     fld _10
     fxch 
@@ -28,7 +30,7 @@ etiq1
     fstsw ax
     sahf
     ffree
-    jl etiq2
+    jl etiq11
     fld _x
     fld _4
     fxch 
@@ -36,14 +38,19 @@ etiq1
     fstsw ax
     sahf
     ffree
-    jle etiq3
+    jle etiq19
+etiq11:
     DisplayFloat _x
     newLine
 
+    fld _x
+    fld _1
+    fadd 
+    ffree 1 
+    fst _x
+    ffree
     jmp etiq1
-etiq4
-etiq3
-etiq2
+etiq19:
     mov ax, 4C00h
     int 21h
 END START

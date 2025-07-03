@@ -7,6 +7,7 @@
 #define MAX_LINE 256
 #define MAX_TRIPLES 1000
 
+
 // Estructura para los tercetos
 typedef struct {
     char op[MAX_LONG_STR];
@@ -57,6 +58,7 @@ void mostrarLista(ListaTriples lista);
 void liberarLista(ListaTriples* lista);
 
 static int etiquetas = 1;
+static int lastEtiqueta = -1;
 
 void clean_identifier(char* dest, const char* src)
 {
@@ -86,6 +88,7 @@ void clean_identifier(char* dest, const char* src)
         strncat(dest, temp, MAX_LONG_ID - 2);
     }
 }
+
 
 const char* resolve_reference(const char* arg)
 {
@@ -303,43 +306,88 @@ int esWRITE(int indice)
 
 void generarWRITE(FILE* asm_file, ListaTriples* listaOperandos, int indice)
 {
+    // int op1;
+
+    // sscanf(triples[indice].arg1, "[%d]", &op1);
+
+    // int i;
+    // int symbol_tableTAM = 1000;
+    // char tipo[30];
+    // char nombre[100];
+
+    // Triple* arg1 = buscarTriplePorIndice(listaOperandos, op1);
+
+    // char aux[100];
+    // char auxOp[100];
+
+    // strcpy(auxOp, arg1->op);
+
+    // int len = strlen(arg1->op);
+
+    // // Validar que tenga al menos dos caracteres y comience y termine con comillas
+    // if (len >= 2 && auxOp[0] == '"' && auxOp[len - 1] == '"')
+    // {
+    //     strncpy(aux, auxOp + 1, len - 2);
+    //     aux[len - 2] = '\0';
+    //     strcpy(arg1->op, aux);
+    // }
+
+    // for(i = 0; i < symbol_tableTAM; i ++)
+    // {
+    //     if (strcmp(symbol_table[i].nombre, arg1->op) == 0)
+    //     {   
+    //         strcpy(tipo, symbol_table[i].tipoDato);
+    //         strcpy(nombre, symbol_table[i].nombre);
+    //         break;
+    //     }
+    // }
+
+    // // 🔧 Agregado: si esta instrucción es parte de un OR (viene después de BLE), hay que imprimir la etiqueta
+    // if (esParteDeOR(indice - 1)) {
+    //     fprintf(asm_file, "etiq%d:\n", triples[indice].index);
+    // }
+
+    // if(strcmp(tipo, "CTE_STRING") == 0)
+    //     fprintf(asm_file, "    displayString _%s\n", nombre);
+    // else
+    //     fprintf(asm_file, "    DisplayFloat _%s\n", nombre);
+
+    // fprintf(asm_file, "    newLine\n\n");
+   static int etiquetaImprimidaAnterior = -1; // para evitar imprimir etiqueta duplicada
+    int etiqueta = esDestinoEtiquetaDeSalto(triples[indice].index);
+
+    if (etiqueta > 0 && etiqueta != etiquetaImprimidaAnterior) {
+        fprintf(asm_file, "etiq%d:\n", etiqueta);
+        etiquetaImprimidaAnterior = etiqueta;
+    }
+
     int op1;
-
     sscanf(triples[indice].arg1, "[%d]", &op1);
-
-    int i;
-    int symbol_tableTAM = 1000;
-    char tipo[30];
-    char nombre[100];
-
     Triple* arg1 = buscarTriplePorIndice(listaOperandos, op1);
+    if (arg1 == NULL) return;
 
+    // Limpiar cadena si tiene comillas dobles
     char aux[100];
-    char auxOp[100];
-
-    strcpy(auxOp, arg1->op);
-
     int len = strlen(arg1->op);
-
-    // Validar que tenga al menos dos caracteres y comience y termine con comillas
-    if (len >= 2 && auxOp[0] == '"' && auxOp[len - 1] == '"')
-    {
-        strncpy(aux, auxOp + 1, len - 2);
+    if (len >= 2 && arg1->op[0] == '"' && arg1->op[len - 1] == '"') {
+        strncpy(aux, arg1->op + 1, len - 2);
         aux[len - 2] = '\0';
         strcpy(arg1->op, aux);
     }
 
-    for(i = 0; i < symbol_tableTAM; i ++)
-    {
-        if (strcmp(symbol_table[i].nombre, arg1->op) == 0)
-        {   
+    // Buscar tipo y nombre en tabla de símbolos
+    char tipo[30] = "";
+    char nombre[100] = "";
+    int i = 0;
+    for (i; i < symbol_count; i++) {
+        if (strcmp(symbol_table[i].nombre, arg1->op) == 0) {
             strcpy(tipo, symbol_table[i].tipoDato);
             strcpy(nombre, symbol_table[i].nombre);
             break;
         }
     }
 
-    if(strcmp(tipo, "CTE_STRING") == 0)
+    if (strcmp(tipo, "CTE_STRING") == 0)
         fprintf(asm_file, "    displayString _%s\n", nombre);
     else
         fprintf(asm_file, "    DisplayFloat _%s\n", nombre);
@@ -347,6 +395,38 @@ void generarWRITE(FILE* asm_file, ListaTriples* listaOperandos, int indice)
     fprintf(asm_file, "    newLine\n\n");
 }
 
+int esDestinoEtiquetaDeSalto(int destino)
+{
+    int i = 0;
+    for (i; i < triple_count; i++) {
+        if (esSalto(i)) {
+            int salto = -1;
+            if (sscanf(triples[i].arg1, "[%d]", &salto) == 1) {
+                if (salto == destino) {
+                    return triples[i].index; // índice del terceto salto que apunta a 'destino'
+                }
+            }
+        }
+    }
+    return 0; // No es destino de salto
+}
+
+int esDestinoEtiquetaDeBLE(int destino) {
+    int i = 0;
+    for (i; i < triple_count; i++) {
+        if ((strcmp(triples[i].op, "BLE") == 0) || (strcmp(triples[i].op, "BLT") == 0) ||
+            (strcmp(triples[i].op, "BGE") == 0) || (strcmp(triples[i].op, "BGT") == 0) ||
+            (strcmp(triples[i].op, "BEQ") == 0) || (strcmp(triples[i].op, "BNE") == 0)) {
+            int salto = -1;
+            if (sscanf(triples[i].arg1, "[%d]", &salto) == 1) {
+                if (salto == destino) {
+                    return triples[i].index; // Retorna la etiqueta (índice del terceto que apunta)
+                }
+            }
+        }
+    }
+    return 0; // No es destino de ninguna etiqueta BLE
+}
 
 void generarAsignacion(FILE* asm_file, ListaTriples* listaOperandos, int indice)
 {
@@ -399,62 +479,85 @@ void generarComparacion(FILE* asm_file, ListaTriples* listaOperandos, int indice
     return;
 }
 
-void generarSalto(FILE* asm_file, Pila* pilaSaltos, Pila* pilaEtiquetas, Pila* pilaEtiquetasBucle, ListaTriples* listaOperandos, int indice)
+void generarSalto(FILE* asm_file, Pila* pilaSaltos, Pila* pilaEtiquetas, Pila* pilaEtiquetasBucle, ListaTriples* listaOperandos, int indice,Pila* pilaEtiquetasPendientes)
 {
     int salto;
-
     sscanf(triples[indice].arg1, "[%d]", &salto);
 
     apilar(pilaSaltos, salto);
-    apilar(pilaEtiquetas, etiquetas);
+    apilar(pilaEtiquetas, salto);  // Siempre apilamos la etiqueta para imprimir luego
+    apilar(pilaEtiquetasPendientes, salto);
 
-    if(strcmp(triples[indice].op, "BGT") == 0)
-        fprintf(asm_file, "    jg etiq%d\n", etiquetas);
-    
-    if(strcmp(triples[indice].op, "BGE") == 0)
-        fprintf(asm_file, "    jge etiq%d\n", etiquetas);
-    
-    if(strcmp(triples[indice].op, "BLT") == 0)
-        fprintf(asm_file, "    jl etiq%d\n", etiquetas);
-
-    if(strcmp(triples[indice].op, "BLE") == 0)
-        fprintf(asm_file, "    jle etiq%d\n", etiquetas);
-
-    if(strcmp(triples[indice].op, "BEQ") == 0)
-        fprintf(asm_file, "    je etiq%d\n", etiquetas);
-
-    if(strcmp(triples[indice].op, "BNE") == 0)
-        fprintf(asm_file, "    jne etiq%d\n", etiquetas);
-
-    if(strcmp(triples[indice].op, "BI") == 0)
-    {
-        
-        if(triples[indice].index > salto)
-        {
-            fprintf(asm_file, "    jmp etiq%d\n", desapilar(pilaEtiquetasBucle));
-        }
-        else
-        {
-            fprintf(asm_file, "    jmp etiq%d\n", etiquetas);
-        }
-
+    if (strcmp(triples[indice].op, "BGT") == 0) {
+        fprintf(asm_file, "    jg etiq%d\n", salto);
     }
-
-    etiquetas ++;
-
-    return;
+    else if (strcmp(triples[indice].op, "BGE") == 0) {
+        fprintf(asm_file, "    jge etiq%d\n", salto);
+    }
+    else if (strcmp(triples[indice].op, "BLT") == 0) {
+        fprintf(asm_file, "    jl etiq%d\n", salto);
+    }
+    else if (strcmp(triples[indice].op, "BLE") == 0) {
+        fprintf(asm_file, "    jle etiq%d\n", salto);
+    }
+    else if (strcmp(triples[indice].op, "BEQ") == 0) {
+        fprintf(asm_file, "    je etiq%d\n", salto);
+    }
+    else if (strcmp(triples[indice].op, "BNE") == 0) {
+        fprintf(asm_file, "    jne etiq%d\n", salto);
+    }
+    else if (strcmp(triples[indice].op, "BI") == 0) {
+        // salto incondicional, puede ser backward (bucle) o forward
+        if (triples[indice].index > salto) {
+            // salto atrás: desapilar etiqueta de bucle para imprimir
+            int etiq_bucle = desapilar(pilaEtiquetasBucle);
+            fprintf(asm_file, "    jmp etiq%d\n", etiq_bucle);
+        } else {
+            fprintf(asm_file, "    jmp etiq%d\n", salto);
+        }
+    }
 }
 
-void generarEtiqueta(FILE* asm_file, Pila* pilaEtiquetas, ListaTriples* listaOperandos)
-{
-    fprintf(asm_file, "etiq%d\n", desapilar(pilaEtiquetas));
+// Función auxiliar para detectar si el terceto es parte de un OR
+int esParteDeOR(int indice) {
+    if (indice < 0 || indice >= triple_count) return 0;
 
-    return;
+    if (strcmp(triples[indice].op, "BLE") != 0) return 0;
+
+    // Obtener el salto que hace BLE (la etiqueta)
+    int salto;
+    if (sscanf(triples[indice].arg1, "[%d]", &salto) != 1) return 0;
+
+    // Buscar el índice del terceto con esa etiqueta
+    // Suponemos que la etiqueta tiene índice igual al salto (o buscar en triples por index == salto)
+    int i = 0;
+    for (i; i < triple_count; i++) {
+        if (triples[i].index == salto) {
+            // Si el terceto i es un WRITE, entonces este BLE es parte de un OR
+            if (strcmp(triples[i].op, "WRITE") == 0) {
+                return 1;
+            }
+        }
+    }
+
+    return 0;
+}
+
+void generarEtiqueta(FILE* asm_file, Pila* pilaEtiquetas, ListaTriples* listaOperandos, int* etiquetasImpresas)
+{
+    if (pilaVacia(pilaEtiquetas)) return;
+
+    int etiq = desapilar(pilaEtiquetas);
+
+    if (etiquetasImpresas[etiq]) return;
+    etiquetasImpresas[etiq] = 1;
+
+    fprintf(asm_file, "etiq%d:\n", etiq);
 }
 
 void generarEtiquetaBucle(FILE* asm_file, int index)
 {
-    fprintf(asm_file, "etiq%d\n", index);
+    fprintf(asm_file, "etiq%d:\n", index);
 
     return;
 }
@@ -529,12 +632,14 @@ void obtenerSaltosBucles(ListaEntero* listaBucles)
 void generarCodigo(FILE* asm_file)
 {
     int i, sig;
-
+    int etiquetasImpresas[1000] = {0};
     Pila* pilaSaltos;
     Pila* pilaEtiquetas;
     Pila* pilaEtiquetasBucle;
     ListaTriples listaOperandos;
     ListaEntero listaBucles;
+    Pila* pilaEtiquetasPendientes;
+    pilaEtiquetasPendientes = crearPila();
 
     pilaSaltos = crearPila();
     pilaEtiquetas = crearPila();
@@ -545,7 +650,12 @@ void generarCodigo(FILE* asm_file)
     obtenerSaltosBucles(&listaBucles);
 
     for (i = 0; i < triple_count; i++)
-    {
+    {   
+      if (esDestinoEtiquetaDeSalto(triples[i].index) && !etiquetasImpresas[triples[i].index]) {
+    fprintf(asm_file, "etiq%d:\n", triples[i].index);
+    etiquetasImpresas[triples[i].index] = 1;
+}
+
         if (EnteroExisteValor(&listaBucles, triples[i].index))
         {
             generarEtiquetaBucle(asm_file, etiquetas);
@@ -554,7 +664,7 @@ void generarCodigo(FILE* asm_file)
         }
 
         if(esEtiqueta(pilaSaltos, i))
-            generarEtiqueta(asm_file, pilaEtiquetas, &listaOperandos);
+            generarEtiqueta(asm_file, pilaEtiquetas, &listaOperandos,etiquetasImpresas);
 
         if(esOperador(i))
             generarOperacion(asm_file, &listaOperandos, i);
@@ -566,7 +676,7 @@ void generarCodigo(FILE* asm_file)
             generarComparacion(asm_file, &listaOperandos, i);
 
         if(esSalto(i))
-            generarSalto(asm_file, pilaSaltos, pilaEtiquetas, pilaEtiquetasBucle, &listaOperandos, i);
+            generarSalto(asm_file, pilaSaltos, pilaEtiquetas, pilaEtiquetasBucle, &listaOperandos, i, pilaEtiquetasPendientes);
 
         if(esREAD(i))
             generarREAD(asm_file, &listaOperandos, i);
@@ -580,13 +690,14 @@ void generarCodigo(FILE* asm_file)
     }
 
     while(!pilaVacia(pilaEtiquetas))
-        generarEtiqueta(asm_file, pilaEtiquetas, &listaOperandos);
+        generarEtiqueta(asm_file, pilaEtiquetas, &listaOperandos,etiquetasImpresas);
     
     destruirPila(pilaSaltos);
     destruirPila(pilaEtiquetas);
     destruirPila(pilaEtiquetasBucle);
     liberarLista(&listaOperandos);
     EnteroLiberarLista(&listaBucles);
+    destruirPila(pilaEtiquetasPendientes);
 }
 
 void generate_assembler(const char* output_filename)
@@ -809,7 +920,8 @@ int EnteroObtenerElemento(ListaEntero* lista, int indice) {
     if (indice < 0 || indice >= lista->tamanio) return -1;
 
     NodoEntero* actual = lista->cabeza;
-    for (int i = 0; i < indice; i++)
+    int i = 0;
+    for (i; i < indice; i++)
         actual = actual->siguiente;
 
     return actual->dato;

@@ -28,6 +28,15 @@
 26) write -> WRITE ( ID )
 17) sentencia -> write
 12) bloque -> sentencia
+50) factor -> ID
+49) termino -> factor
+46) expresion -> termino
+51) factor -> CONST_INT
+49) termino -> factor
+44) expresion -> expresion + termino
+20) asignacion -> ID := expresion
+13) sentencia -> asignacion
+11) bloque -> bloque sentencia
 22) iteracion -> WHILE ( condiciones ) { bloque }
 14) sentencia -> iteracion
 11) bloque -> bloque sentencia
