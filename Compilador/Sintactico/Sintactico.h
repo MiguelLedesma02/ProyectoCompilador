@@ -5,6 +5,7 @@
 #include "../Archivo/Archivo.h"
 #include "../Tercetos/Tercetos.h"
 #include "../Pila/Pila.h"
+#include "../Lista/Lista.h"
 
 
 /*VARIABLES GLOBALES*/
@@ -71,9 +72,9 @@ void generarRead(char* id);
 void generarWrite(char* str, int string);
 int sumarPrimos(int n);
 int esPrimo(int n);
-void reorder(char* o, char* p);
-void reorderIzquierda(int pivot);
-void reorderDerecha(int pivot);
+void reorder(char* o, char* p, int tam);
+void reorderIzquierda(int pivot, int tam);
+void reorderDerecha(int pivot, int tam);
 void validarParametrosReorder(int orden, int pivot);
 
 extern int yyerror(char* descripcion);

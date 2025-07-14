@@ -27,6 +27,7 @@ entrada_ts buscarToken(FILE* pf, char* tk)
 
     int tam = MAX_LONG_STR + MAX_LONG_TD + MAX_LONG_STR + MAX_LONG_LONG;
     char *aux;
+    char auxToken[MAX_LONG_STR];
     char* linea = malloc(tam);
     entrada_ts entrada;
 
@@ -53,7 +54,12 @@ entrada_ts buscarToken(FILE* pf, char* tk)
         if(aux)
             entrada.longitud = atoi(aux);
 
-        if(strcmp(entrada.nombre, tk) == 0)
+        strcpy(auxToken, tk);
+        ajustarCadena(auxToken);
+
+        //printf("ARCHIVO: %s - CADENA: %s\n", entrada.nombre, auxToken);
+
+        if(strcmp(entrada.nombre, auxToken) == 0)
             return entrada;
     }
 
@@ -173,7 +179,21 @@ char* getTipo(FILE *pf, char* tk, char* td)
     }
 
     strcpy(td, entrada.tipoDato);
+    memmove(td, td + 4, strlen(td) - 3);
     free(linea);
 
     return td;
+}
+
+void ajustarCadena(char *cadena)
+{
+    int len = strlen(cadena);
+
+    if (len >= 2 && cadena[0] == '"' && cadena[len - 1] == '"')
+    {
+        memmove(cadena, cadena + 1, len - 2);
+        cadena[len - 2] = '\0';
+    }
+
+    return;
 }
