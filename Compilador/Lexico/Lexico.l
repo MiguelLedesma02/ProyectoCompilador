@@ -48,7 +48,7 @@ SUMFIRSTPRIMES      "sumFirstPrimes"
 
 /*TOKENS BÁSICOS*/
 
-ID                  {LETRA}({LETRA}|{DIGITO}|"_")*
+ID                  {LETRA}({LETRA}|{DIGITO})*
 CONST_INT           "-"?{DIGITO}+
 CONST_FLOAT         "-"?(({DIGITO}+("."{DIGITO}*)?)|("."{DIGITO}+))([eE][-+]?{DIGITO}+)?
 CONST_STRING        \"[^\n"]*\"

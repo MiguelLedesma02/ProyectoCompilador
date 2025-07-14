@@ -12,6 +12,7 @@ extern FILE *ptemp;
 int cantVarEnLinea = 0;
 int cantVarDeclaradas = 0;
 int varAux = 0;
+int reorderAux = 0;
 
 /*FUNCIONES DEL SINTÁCTICO*/
 int yylex();
@@ -248,52 +249,30 @@ asignacion:
     { fprintf(pparser, "20) asignacion -> ID := expresion\n"); }
     ;
 
-asignacion:
-	ID OP_ASIG CONST_STRING
-    {
-        if(buscarVar($1) == 0)
-            yyerror("No puede usar una variable que no fue declarada previamente.");
-
-        char auxTD[MAX_LONG_TD];
-
-        getTipo(pst, $1, auxTD);
-
-        if(strcmp(auxTD, "CTE_STRING") != 0)
-            yyerror("No se pueden realizar asignaciones con tipos de datos incompatibles.");
-    }
-    {
-        char op[MAX_LONG_STR];
-        char op1[10];
-        char op2[10];
-
-        sprintf(op, "%s", $3);
-
-        Strind = crearTerceto(op, "_", "_");
-        Aind = crearTerceto($1, "_", "_");
-
-        sprintf(op1, "[%d]", Aind);
-        sprintf(op2, "[%d]", Strind);
-
-        crearTerceto($2, op1, op2);
-    }
-    { fprintf(pparser, "21) asignacion -> ID := CONST_STRING\n"); }
-    ;
-
 iteracion:
 	WHILE { apilar(Bpila, indiceTerceto); } PAR_AP condiciones PAR_CL LLA_AP
-    { apilar(AUXPila, indiceTerceto); } bloque LLA_CL { generarWhile(); }
+    { apilar(AUXPila, indiceTerceto); } bloque LLA_CL
+    { 
+        apilar(ANDPila, 0);
+        generarWhile();
+        desapilar(ANDPila);
+    }
     { fprintf(pparser, "22) iteracion -> WHILE ( condiciones ) { bloque }\n"); }
     ;
 
 seleccion:
-	IF PAR_AP condiciones PAR_CL LLA_AP marcador_if bloque LLA_CL marcador_fin_if
+	IF PAR_AP condiciones PAR_CL LLA_AP marcador_if marcador_aux bloque LLA_CL marcador_fin_if
     { fprintf(pparser, "23) seleccion -> IF ( condiciones ) { bloque }\n"); }
     ;
 
 seleccion:
-    IF PAR_AP condiciones PAR_CL LLA_AP marcador_if bloque LLA_CL marcador_else
+    IF PAR_AP condiciones PAR_CL LLA_AP marcador_if marcador_aux bloque LLA_CL marcador_else
     ELSE LLA_AP marcador_else_if bloque LLA_CL marcador_fin_else
     { fprintf(pparser, "24) seleccion -> IF ( condiciones ) { bloque } ELSE { bloque } \n"); }
+    ;
+
+marcador_aux:
+    { apilar(ANDPila, 0); }
     ;
 
 marcador_if:
@@ -301,6 +280,7 @@ marcador_if:
     ;
 
 marcador_fin_if:
+    { desapilar(ANDPila); }
     { generarIf(); }
     ;
 
@@ -344,7 +324,28 @@ write:
 	;
 
 reorder:
-    REORDER PAR_AP COR_AP expresiones COR_CL COMA CONST_INT COMA CONST_INT PAR_CL { reorder($7, $9); }
+    REORDER PAR_AP COR_AP
+    {   
+        char aux[10];
+        char op1[10];
+
+        int auxInd = crearTerceto("ANTES REORDER", "_", "_");
+
+        sprintf(op1, "[%d]", auxInd);
+        crearTerceto("WRITE", op1, "_");
+    } expresiones COR_CL COMA CONST_INT COMA CONST_INT PAR_CL
+    { 
+        char aux[10];
+        char op1[10];
+
+        int auxInd = crearTerceto("DESPUES REORDER", "_", "_");
+
+        sprintf(op1, "[%d]", auxInd);
+        crearTerceto("WRITE", op1, "_");
+        reorder($8, $10, reorderAux);
+        reorderAux = 0;
+
+    }
     { fprintf(pparser, "28) reorder -> REORDER ( [ expresiones ] , CONST_INT , CONST_INT )\n") }
     ;
 
@@ -358,7 +359,7 @@ sumfirstprimes:
 
         getTipo(pst, $1, auxTD);
 
-        if(strcmp(auxTD, "CTE_INTEGER") != 0)
+        if(strcmp(auxTD, "INTEGER") != 0)
             yyerror("No se pueden asignar el resultado de sumFirstPrimes a una variable no entera.");
 
         char op[MAX_LONG_STR];
@@ -401,6 +402,9 @@ expresiones:
         sprintf(op1, "[%d]", Aind);
         sprintf(op2, "[%d]", Eind);
         crearTerceto(":=", op1, op2);
+        crearTerceto("WRITE", op1, "_");
+
+        reorderAux ++;
     }
     { fprintf(pparser, "30) expresiones -> expresiones , expresion\n"); }
     ;
@@ -420,6 +424,9 @@ expresiones:
         sprintf(op1, "[%d]", Aind);
         sprintf(op2, "[%d]", Eind);
         crearTerceto(":=", op1, op2);
+        crearTerceto("WRITE", op1, "_");
+
+        reorderAux ++;
     }
     { fprintf(pparser, "31) expresiones -> expresion\n"); }
     ;
@@ -445,96 +452,241 @@ condiciones:
     ;
 
 condiciones:
-    condiciones AND NOT condicion
+    condiciones AND { auxAND = desapilar(Bpila); apilar(ANDPila, auxAND); } NOT condicion { negarCondicion(Cind); }
     { fprintf(pparser, "36) condiciones -> condiciones AND NOT condicion\n"); }
     ;
 
 condiciones:
-    condiciones OR NOT condicion
+    condiciones OR { auxOR = desapilar(Bpila); apilar(ORPila, auxOR); } NOT condicion { negarCondicion(Cind); }
     { fprintf(pparser, "37) condiciones -> condiciones OR NOT condicion\n"); }
     ;
 
 condicion:
     expresion
     {
+        int aux;
+        char op1[10], op2[10];
+
+        aux = crearTerceto("@cond1", "_", "_");
+
+        sprintf(op1, "[%d]", aux);
+        sprintf(op2, "[%d]", Eind);
+        crearTerceto(":=", op1, op2);
+
+        Eind = aux;
+
         apilar(Bpila, Eind);
         
-        if(strcmp(ETDind, "CTE_INTEGER") == 0)
+        if(strcmp(ETDind, "INTEGER") == 0)
             apilar(ETDpila, 1);
         else
             apilar(ETDpila, 2);
     }
-    OP_MAYOR expresion { Cind = generarCondicion("BLE"); }
+    OP_MAYOR expresion
+    {
+        int aux;
+        char op1[10], op2[10];
+
+        aux = crearTerceto("@cond2", "_", "_");
+
+        sprintf(op1, "[%d]", aux);
+        sprintf(op2, "[%d]", Eind);
+        crearTerceto(":=", op1, op2);
+
+        Eind = aux;
+
+        Cind = generarCondicion("BLE");
+    }
     { fprintf(pparser, "38) condicion -> expresion > expresion\n"); }
     ;
 
 condicion:
     expresion
     {
+        int aux;
+        char op1[10], op2[10];
+
+        aux = crearTerceto("@cond1", "_", "_");
+
+        sprintf(op1, "[%d]", aux);
+        sprintf(op2, "[%d]", Eind);
+        crearTerceto(":=", op1, op2);
+
+        Eind = aux;
+
         apilar(Bpila, Eind);
         
-        if(strcmp(ETDind, "CTE_INTEGER") == 0)
+        if(strcmp(ETDind, "INTEGER") == 0)
             apilar(ETDpila, 1);
         else
             apilar(ETDpila, 2);
     } 
-    OP_MAYOR_IGUAL expresion { Cind = generarCondicion("BLT"); }
+    OP_MAYOR_IGUAL expresion
+    { 
+        int aux;
+        char op1[10], op2[10];
+
+        aux = crearTerceto("@cond2", "_", "_");
+
+        sprintf(op1, "[%d]", aux);
+        sprintf(op2, "[%d]", Eind);
+        crearTerceto(":=", op1, op2);
+
+        Eind = aux;
+        Cind = generarCondicion("BLT");
+    }
     { fprintf(pparser, "39) condicion -> expresion >= expresion\n"); }
     ;
 
 condicion:
     expresion
     {
+        int aux;
+        char op1[10], op2[10];
+
+        aux = crearTerceto("@cond1", "_", "_");
+
+        sprintf(op1, "[%d]", aux);
+        sprintf(op2, "[%d]", Eind);
+        crearTerceto(":=", op1, op2);
+
+        Eind = aux;
+
         apilar(Bpila, Eind);
         
-        if(strcmp(ETDind, "CTE_INTEGER") == 0)
+        if(strcmp(ETDind, "INTEGER") == 0)
             apilar(ETDpila, 1);
         else
             apilar(ETDpila, 2);
     } 
-    OP_MENOR expresion { Cind = generarCondicion("BGE"); }
+    OP_MENOR expresion
+    { 
+        int aux;
+        char op1[10], op2[10];
+
+        aux = crearTerceto("@cond2", "_", "_");
+
+        sprintf(op1, "[%d]", aux);
+        sprintf(op2, "[%d]", Eind);
+        crearTerceto(":=", op1, op2);
+
+        Eind = aux;
+        Cind = generarCondicion("BGE");
+    }
     { fprintf(pparser, "40) condicion -> expresion < expresion\n"); }
     ;
 
 condicion:
     expresion
     {
+        int aux;
+        char op1[10], op2[10];
+
+        aux = crearTerceto("@cond1", "_", "_");
+
+        sprintf(op1, "[%d]", aux);
+        sprintf(op2, "[%d]", Eind);
+        crearTerceto(":=", op1, op2);
+
+        Eind = aux;
+
         apilar(Bpila, Eind);
         
-        if(strcmp(ETDind, "CTE_INTEGER") == 0)
+        if(strcmp(ETDind, "INTEGER") == 0)
             apilar(ETDpila, 1);
         else
             apilar(ETDpila, 2);
     } 
-    OP_MENOR_IGUAL expresion { Cind = generarCondicion("BGT"); }
+    OP_MENOR_IGUAL expresion
+    {        
+        int aux;
+        char op1[10], op2[10];
+
+        aux = crearTerceto("@cond2", "_", "_");
+
+        sprintf(op1, "[%d]", aux);
+        sprintf(op2, "[%d]", Eind);
+        crearTerceto(":=", op1, op2);
+
+        Eind = aux;
+        Cind = generarCondicion("BGT");
+    }
     { fprintf(pparser, "41) condicion -> expresion <= expresion\n"); }
     ;
 
 condicion:
     expresion
     {
+        int aux;
+        char op1[10], op2[10];
+
+        aux = crearTerceto("@cond1", "_", "_");
+
+        sprintf(op1, "[%d]", aux);
+        sprintf(op2, "[%d]", Eind);
+        crearTerceto(":=", op1, op2);
+
+        Eind = aux;
+
         apilar(Bpila, Eind);
         
-        if(strcmp(ETDind, "CTE_INTEGER") == 0)
+        if(strcmp(ETDind, "INTEGER") == 0)
             apilar(ETDpila, 1);
         else
             apilar(ETDpila, 2);
     } 
-    OP_IGUAL expresion { Cind = generarCondicion("BNE"); }
+    OP_IGUAL expresion
+    { 
+        int aux;
+        char op1[10], op2[10];
+
+        aux = crearTerceto("@cond2", "_", "_");
+
+        sprintf(op1, "[%d]", aux);
+        sprintf(op2, "[%d]", Eind);
+        crearTerceto(":=", op1, op2);
+
+        Eind = aux;
+        Cind = generarCondicion("BNE");
+    }
     { fprintf(pparser, "42) condicion -> expresion == expresion\n"); }
     ;
 
 condicion:
     expresion
     {
-        apilar(Bpila, Eind);
+        int aux;
+        char op1[10], op2[10];
 
-        if(strcmp(ETDind, "CTE_INTEGER") == 0)
+        aux = crearTerceto("@cond1", "_", "_");
+
+        sprintf(op1, "[%d]", aux);
+        sprintf(op2, "[%d]", Eind);
+        crearTerceto(":=", op1, op2);
+
+        Eind = aux;
+
+        apilar(Bpila, Eind);
+        
+        if(strcmp(ETDind, "INTEGER") == 0)
             apilar(ETDpila, 1);
         else
             apilar(ETDpila, 2);
     } 
-    OP_DISTINTO expresion { Cind = generarCondicion("BEQ"); }
+    OP_DISTINTO expresion
+    { 
+        int aux;
+        char op1[10], op2[10];
+
+        aux = crearTerceto("@cond2", "_", "_");
+
+        sprintf(op1, "[%d]", aux);
+        sprintf(op2, "[%d]", Eind);
+        crearTerceto(":=", op1, op2);
+
+        Eind = aux;
+        Cind = generarCondicion("BEQ");
+    }
     { fprintf(pparser, "43) condicion -> expresion != expresion\n"); }
     ;
 
@@ -543,7 +695,7 @@ expresion:
     {
         apilar(Epila, Eind);
 
-        if(strcmp(ETDind, "CTE_INTEGER") == 0)
+        if(strcmp(ETDind, "INTEGER") == 0)
             apilar(ETDpila, 1);
         else
             apilar(ETDpila, 2);
@@ -555,9 +707,9 @@ expresion:
         int auxTD = desapilar(ETDpila);
 
         if(auxTD == 1)
-            strcpy(ETDind, "CTE_INTEGER");
+            strcpy(ETDind, "INTEGER");
         else
-            strcpy(ETDind, "CTE_FLOAT");
+            strcpy(ETDind, "FLOAT");
 
         if(strcmp(ETDind, TTDind) != 0)
             yyerror("No se pueden sumar tipos de datos incompatibles.");
@@ -579,7 +731,7 @@ expresion:
     {
         apilar(Epila, Eind);
 
-        if(strcmp(ETDind, "CTE_INTEGER") == 0)
+        if(strcmp(ETDind, "INTEGER") == 0)
             apilar(ETDpila, 1);
         else
             apilar(ETDpila, 2);
@@ -591,9 +743,9 @@ expresion:
         int auxTD = desapilar(ETDpila);
 
         if(auxTD == 1)
-            strcpy(ETDind, "CTE_INTEGER");
+            strcpy(ETDind, "INTEGER");
         else
-            strcpy(ETDind, "CTE_FLOAT");
+            strcpy(ETDind, "FLOAT");
 
         if(strcmp(ETDind, TTDind) != 0)
             yyerror("No se pueden restar tipos de datos incompatibles.");
@@ -624,7 +776,7 @@ termino:
     {
         apilar(Tpila, Tind);
 
-        if(strcmp(TTDind, "CTE_INTEGER") == 0)
+        if(strcmp(TTDind, "INTEGER") == 0)
             apilar(TTDpila, 1);
         else
             apilar(TTDpila, 2);
@@ -635,9 +787,9 @@ termino:
         int auxTD = desapilar(TTDpila);
 
         if(auxTD == 1)
-            strcpy(TTDind, "CTE_INTEGER");
+            strcpy(TTDind, "INTEGER");
         else
-            strcpy(TTDind, "CTE_FLOAT");
+            strcpy(TTDind, "FLOAT");
 
         if(strcmp(TTDind, FTDind) != 0)
             yyerror("No se pueden multiplicar tipos de datos incompatibles.");
@@ -659,7 +811,7 @@ termino:
     {
         apilar(Tpila, Tind);
 
-        if(strcmp(TTDind, "CTE_INTEGER") == 0)
+        if(strcmp(TTDind, "INTEGER") == 0)
             apilar(TTDpila, 1);
         else
             apilar(TTDpila, 2);
@@ -670,9 +822,9 @@ termino:
         int auxTD = desapilar(TTDpila);
 
         if(auxTD == 1)
-            strcpy(TTDind, "CTE_INTEGER");
+            strcpy(TTDind, "INTEGER");
         else
-            strcpy(TTDind, "CTE_FLOAT");
+            strcpy(TTDind, "FLOAT");
 
         if(strcmp(TTDind, FTDind) != 0)
             yyerror("No se pueden dividir tipos de datos incompatibles.");
@@ -715,9 +867,34 @@ factor:
     ;
 
 factor:
+    OP_RESTA ID
+    {
+        if(buscarVar($2) == 0)
+            yyerror("No puede usar una variable que no fue declarada previamente.");
+        
+        char auxTD[MAX_LONG_TD];
+        getTipo(pst, $2, auxTD);
+        strcpy(FTDind, auxTD);
+
+        int aux;
+        char op1[10];
+        char op2[10];
+
+        Find = crearTerceto($2, "_", "_");
+        aux = crearTerceto("-1", "_", "_");
+
+        sprintf(op1, "[%d]", Find);
+        sprintf(op2, "[%d]", aux);
+
+        Find = crearTerceto("*", op1, op2);
+    }
+    { fprintf(pparser, "50) factor -> ID\n"); }
+    ;
+
+factor:
     CONST_INT
     { 
-        strcpy(FTDind, "CTE_INTEGER");
+        strcpy(FTDind, "INTEGER");
         Find = crearTerceto($1, "_", "_");
     }
     { fprintf(pparser, "51) factor -> CONST_INT\n"); }
@@ -726,7 +903,7 @@ factor:
 factor:
     CONST_FLOAT
     {
-        strcpy(FTDind, "CTE_FLOAT");
+        strcpy(FTDind, "FLOAT");
         Find = crearTerceto($1, "_", "_");
     }
     { fprintf(pparser, "52) factor -> CONST_FLOAT\n"); }

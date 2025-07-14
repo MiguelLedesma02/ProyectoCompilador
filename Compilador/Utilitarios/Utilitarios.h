@@ -14,7 +14,7 @@
 /*ESTRUCTURAS*/
 typedef struct
 {
-    char nombre[MAX_LONG_ID];
+    char nombre[MAX_LONG_STR];
     char tipoDato[MAX_LONG_TD];
     char valor[MAX_LONG_STR];
     unsigned longitud;

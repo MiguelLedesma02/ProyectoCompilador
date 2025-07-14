@@ -1,934 +1,764 @@
+#include "Assembler.h"
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include "../Utilitarios/Utilitarios.h"
-#include "../Pila/Pila.h"
 
-#define MAX_LINE 256
-#define MAX_TRIPLES 1000
+//VARIABLES GLOBALES
+int numLineas;
+int numTercetos;
 
+lineaTS lineas[MAX_TAM_VARIABLES];
+terceto ternas[MAX_TAM_TERCETOS];
 
-// Estructura para los tercetos
-typedef struct {
-    char op[MAX_LONG_STR];
-    char arg1[MAX_LONG_STR];
-    char arg2[MAX_LONG_STR];
-    int index;
-} Triple;
-
-entrada_ts symbol_table[1000];
-int symbol_count = 0;
-Triple triples[MAX_TRIPLES];
-int triple_count = 0;
-
-typedef struct NodoLista {
-    Triple triple;
-    struct NodoLista* sig;
-} NodoLista;
-
-typedef struct {
-    NodoLista* cabeza;
-} ListaTriples;
-
-typedef struct NodoEntero {
-    int dato;
-    struct NodoEntero* siguiente;
-} NodoEntero;
-
-typedef struct {
-    NodoEntero* cabeza;
-    int tamanio;
-} ListaEntero;
-
-void EnteroCrearLista(ListaEntero* lista);
-void EnteroInsertarAlFinal(ListaEntero* lista, int valor);
-void EnteroEliminarValor(ListaEntero* lista, int valor);
-int  EnteroObtenerElemento(ListaEntero* lista, int indice);
-int  EnteroObtenerTamanio(ListaEntero* lista);
-void EnteroMostrarLista(ListaEntero* lista);
-void EnteroLiberarLista(ListaEntero* lista);
-int EnteroExisteValor(ListaEntero* lista, int valor);
-
-// Funciones públicas
-void inicializarLista(ListaTriples* lista);
-int insertarTriple(ListaTriples* lista, Triple t);
-Triple* buscarTriplePorIndice(ListaTriples* lista, int index);
-int eliminarTriplePorIndice(ListaTriples* lista, int index);
-void mostrarLista(ListaTriples lista);
-void liberarLista(ListaTriples* lista);
-
-static int etiquetas = 1;
-static int lastEtiqueta = -1;
-
-void clean_identifier(char* dest, const char* src)
+void generarAssembler(char* symbolTableFile, char* intermediaCodeFile, char* assemblerCodeFile)
 {
-    int i = 0;
-    int j = 0;
-    char temp[MAX_LONG_ID] = {0};
+    FILE* pAC;
 
-    //Se recorre la cadena eliminando "@", ".", "%" y " " 
-    for (i = 0; src[i] && j < MAX_LONG_ID - 10; i ++)
+    cargarVariables(symbolTableFile);
+    cargarTercetos(intermediaCodeFile);
+
+    if(abrirArchivo(&pAC, assemblerCodeFile, "wt") == 1)
+        return;
+
+    generarHeaders(&pAC);
+    generarVariables(&pAC);
+    generarCodigo(&pAC);
+
+    fclose(pAC);
+
+    return;
+}
+
+void cargarVariables(char* symbolTableFile)
+{
+    int menosUno = 0;
+    FILE* pST;
+    char linea[MAX_TAM_LINEA];
+
+    if(abrirArchivo(&pST, symbolTableFile, "rt") == 1)
+        return;
+
+    //Se cargan las variables y constantes del programador
+    while(fgets(linea, MAX_TAM_LINEA, pST) && numLineas < MAX_TAM_VARIABLES)
     {
-        if (src[i] != '@' && src[i] != '.' && src[i] != '%' && src[i] != ' ')
-            temp[j++] = src[i];
+        //Se guarda la variable en memoria
+        sscanf(linea, "%[^|]|%[^|]|%[^|]|%u",
+               lineas[numLineas].nombre,
+               lineas[numLineas].tipoDato,
+               lineas[numLineas].valor,
+               &lineas[numLineas].longitud);
+
+        if(strcmp(lineas[numLineas].valor, "-1") == 0)
+            menosUno = 1;
+
+        numLineas ++;
     }
 
-    temp[j] = '\0';
-
-    //Si es un dígito, se le agregan dos guiones bajos
-    if (temp[0] >= '0' && temp[0] <= '9')
+    if(menosUno == 0)
     {
-        strcpy(dest, "_");
-        strncat(dest, temp, MAX_LONG_ID - 3);
+        strcpy(lineas[numLineas].nombre, "-1");
+        strcpy(lineas[numLineas].tipoDato, "CTE_INTEGER");
+        strcpy(lineas[numLineas].valor, "-1");
+        lineas[numLineas].longitud = 2;
+
+        numLineas ++;
     }
-    //Si es un indentificador, se le agrega solo guión bajo
+
+    fclose(pST);
+
+    return;
+}
+
+void cargarTercetos(char* intermediaCodeFile)
+{
+    FILE* pIC;
+    char linea[MAX_TAM_LINEA];
+
+    if(abrirArchivo(&pIC, intermediaCodeFile, "rt") == 1)
+        return;
+
+    //Se cargan los tercetos
+    while(fgets(linea, MAX_TAM_LINEA, pIC) && numTercetos < MAX_TAM_TERCETOS)
+    {
+        //Se guarda la variable en memoria
+        sscanf(linea, "[%d] (%[^,], %[^,], %[^\n)])",
+               &ternas[numTercetos].indice,
+               ternas[numTercetos].op,
+               ternas[numTercetos].arg1,
+               ternas[numTercetos].arg2);
+
+        numTercetos ++;
+    }
+
+    fclose(pIC);
+    
+    return;
+}
+
+void generarHeaders(FILE** pAC)
+{
+    fprintf(*pAC, "include macros2.asm\n");
+    fprintf(*pAC, "include number.asm\n\n");
+    fprintf(*pAC, ".MODEL LARGE\n");
+    fprintf(*pAC, ".386\n");
+    fprintf(*pAC, ".STACK 200h\n\n");
+
+    return;
+}
+
+void generarVariables(FILE** pAC)
+{
+    int i;
+    int numAux = -1;
+    int maxAux = -1;
+    char var[MAX_LONG_ID];
+
+    fprintf(*pAC, ".DATA\n\n");
+
+    //Se generan las variables del programador
+    for(i = 0; i < numLineas; i ++)
+        crearVariableProgramador(pAC, lineas[i]);
+
+    //Se buscan todas las variables @auxN siendo N un número
+    for(i = 0; i < numTercetos; i ++)
+    {
+        if(strstr(ternas[i].op, "@aux"))
+        {
+            sscanf(ternas[i].op, "@aux%d", &numAux);
+            if(maxAux < numAux)
+                maxAux = numAux;
+        }
+    }
+
+    //Se generan las variables del compilador
+    crearVariableCompilador(pAC, "ANTES_REORDER", "CTE_STRING", "ANTES REORDER", 16);
+    crearVariableCompilador(pAC, "DESPUES_REORDER", "CTE_STRING", "DESPUES REORDER", 18);
+    crearVariableCompilador(pAC, "@temp", "VAR_INTEGER", "-", 5);
+    crearVariableCompilador(pAC, "@orden", "VAR_INTEGER", "-", 6);
+    crearVariableCompilador(pAC, "@pivot", "VAR_INTEGER", "-", 6);
+    crearVariableCompilador(pAC, "@cond1", "VAR_INTEGER", "-", 6);
+    crearVariableCompilador(pAC, "@cond2", "VAR_INTEGER", "-", 6);
+
+    for(i = 0; i <= maxAux; i ++)
+    {
+        sprintf(var, "@aux%d", i);
+        crearVariableCompilador(pAC, var, "VAR_INTEGER", "-", strlen(var));
+    }
+        
+
+    fprintf(*pAC, "\n");
+
+    return;
+}
+
+void generarCodigo(FILE** pAC)
+{
+    generarInicio(pAC);
+    generarInstrucciones(pAC);
+    generarFin(pAC);
+
+    return;
+}
+
+void crearVariableProgramador(FILE** pAC, lineaTS linea)
+{
+    //Si es una variable, se escribe un '?'. Si es una constante se escribe su valor
+    if(strcmp(linea.valor, "-") == 0)
+        strcpy(linea.valor, "?");
+
+    if(strcmp(linea.tipoDato, "CTE_STRING") == 0 || strcmp(linea.tipoDato, "VAR_STRING") == 0)
+    {
+        formatearCadena(linea.nombre);
+        fprintf(*pAC, "\t_%s\tdb\t'%s', '$'\n", linea.nombre, linea.valor);
+    }
+
+    if(strcmp(linea.tipoDato, "CTE_INTEGER") == 0 || strcmp(linea.tipoDato, "VAR_INTEGER") == 0)
+    {
+        if(strcmp(linea.valor, "?") == 0)
+            fprintf(*pAC, "\t_%s\tdd\t?\n", linea.nombre);
+        else
+        {
+            formatearNumero(linea.nombre);
+            fprintf(*pAC, "\t_%s\tdd\t%d\n", linea.nombre, atoi(linea.valor));
+        }
+    }
+
+    if(strcmp(linea.tipoDato, "CTE_FLOAT") == 0 || strcmp(linea.tipoDato, "VAR_FLOAT") == 0)
+    {
+        if(strcmp(linea.valor, "?") == 0)
+            fprintf(*pAC, "\t_%s\tdd\t?\n", linea.nombre);
+        else
+        {
+            formatearNumero(linea.nombre);
+            fprintf(*pAC, "\t_%s\tdd\t%.2f\n", linea.nombre, atof(linea.valor));
+        }
+    }
+    
+    return;
+}
+
+void crearVariableCompilador(FILE** pAC, char *nombre, char *tipoDato, char *valor, int longitud)
+{
+    //printf("%s\n", tipoDato);
+    strcpy(lineas[numLineas].nombre, nombre);
+    strcpy(lineas[numLineas].tipoDato, tipoDato);
+    strcpy(lineas[numLineas].valor, valor);
+    lineas[numLineas].longitud = longitud;
+
+    if(strcmp(tipoDato, "CTE_STRING") == 0)
+        fprintf(*pAC, "\t_%s\tdb\t'%s', '$'\n", nombre, valor);
     else
-    {
-        strcpy(dest, "_");
-        strncat(dest, temp, MAX_LONG_ID - 2);
-    }
+        fprintf(*pAC, "\t_%s\tdd\t?\n", nombre);
+
+    numLineas ++;
+
+    return;
 }
 
-
-const char* resolve_reference(const char* arg)
+void generarInicio(FILE** pAC)
 {
-    static char buffer[MAX_LONG_STR];
+    fprintf(*pAC, ".CODE\n\n");
+    fprintf(*pAC, "Start:\n\n");
+    fprintf(*pAC, "\tmov AX, @DATA\n");
+    fprintf(*pAC, "\tmov DS, AX\n");
+    fprintf(*pAC, "\tmov ES, AX\n\n");
 
-    if (arg[0] == '[' && arg[strlen(arg)-1] == ']')
+    return;
+}
+
+void generarInstrucciones(FILE** pAC)
+{
+    int i;
+    NodoLista* actual;
+    Lista* etiquetas;
+
+    etiquetas = crearLista();
+
+    crearEtiquetas(&etiquetas);
+
+    for(i = 0; i < numTercetos; i ++)
     {
-        int ref_index;
-        if (sscanf(arg, "[%d]", &ref_index) == 1 && ref_index >= 0 && ref_index < triple_count)
-        {
-            sprintf(buffer, "_temp%d", ref_index);
-            return buffer;
-        }
-    }
+        //Busca si este terceto es alcanzado por un salto
+        if(buscarYEliminar(etiquetas, i))
+            generarEtiqueta(pAC, i);
 
-    if (strcmp(arg, "_") == 0 || strlen(arg) == 0)
-        return "";
+        if(esLectura(i))
+            generarLectura(pAC, i);
+
+        if(esEscritura(i))
+            generarEscritura(pAC, i);
         
-    strcpy(buffer, arg);
-    return buffer;
-}
-
-int load_symbol_table(const char* filename)
-{
-    char line[MAX_LINE];
-
-    //Se abre la Tabla de Símbolos en modo lectura
-    FILE* file = fopen(filename, "r");
-
-    if (!file)
-        return 1;
-
-    //Se inicializa en cero el contador de elementos de la Tabla de Símbolos
-    symbol_count = 0;
-
-    //Lee la Tabla de Símbolos hasta terminarla o leer 1000 registros.
-    while (fgets(line, MAX_LINE, file) && symbol_count < 1000)
-    {
-        //Guarda los campos del registro en un vector.
-        sscanf(line, "%[^|]|%[^|]|%[^|]|%u",
-               symbol_table[symbol_count].nombre,
-               symbol_table[symbol_count].tipoDato,
-               symbol_table[symbol_count].valor,
-               &symbol_table[symbol_count].longitud);
-
-        symbol_count++;
-    }
-
-    fclose(file);
-
-    return 0;
-}
-
-int load_triples(const char* filename)
-{
-    char line[MAX_LINE];
-
-    //Se abre el archivo con la GCI (Tercetos) en modo lectura
-    FILE* file = fopen(filename, "r");
-
-    if (!file)
-        return 1;
-
-    //Se inicializa en cero el contador de tercetos
-    triple_count = 0;
-
-    while (fgets(line, MAX_LINE, file) && triple_count < MAX_TRIPLES)
-    {
-        int index;
-        char op[MAX_LONG_ID] = "", arg1[MAX_LONG_STR] = "", arg2[MAX_LONG_STR] = "";
-        int matches = sscanf(line, "[%d] (%[^,], %[^,], %[^)])", &index, op, arg1, arg2);
+        if(esAsignacion(i))
+            generarAsignacion(pAC, i);
         
-        //Guarda los campos del terceto en un vector.
-        if (matches >= 3)
-        {
-            triples[triple_count].index = index;
-            strcpy(triples[triple_count].op, op);
-            strcpy(triples[triple_count].arg1, arg1);
-            if (matches == 4)
-                strcpy(triples[triple_count].arg2, arg2);
-            else
-                strcpy(triples[triple_count].arg2, "_");
-            triple_count++;
-        }
+        if(esOperacion(i))
+            generarOperacion(pAC, i);
+
+        if(esComparacion(i))
+            generarComparacion(pAC, i);
+
+        if(esSalto(i))
+            generarSalto(pAC, i);
+
+        if(esSFP(i))
+            generarSFP(pAC, i+1);
     }
 
-    fclose(file);
-
-    return 0;
-}
-
-const char* get_symbol_type(const char* name) {
-    int i = 0;
-    for (i; i < symbol_count; i++) {
-        if (strcmp(symbol_table[i].nombre, name) == 0) {
-            return symbol_table[i].tipoDato;
-        }
-    }
-    return NULL;
-}
-
-int esOperador(int indice)
-{
-    //Retorna 1 si es operador y 0 si no
-
-    if(strcmp(triples[indice].op, "+") == 0)
-        return 1;
+    actual = etiquetas->cabeza;
+    while (actual != NULL)
+    {
+        if(actual->dato >= numTercetos)
+            generarEtiqueta(pAC, actual->dato);
             
-    if(strcmp(triples[indice].op, "-") == 0)
+        actual = actual->sig;
+    }
+
+    eliminarLista(etiquetas);
+
+    return;
+}
+
+void generarFin(FILE** pAC)
+{
+    fprintf(*pAC, "mov AX, 4C00H\n");
+    fprintf(*pAC, "int 21H\n");
+    fprintf(*pAC, "END Start\n");
+
+    return;
+}
+
+void crearEtiquetas(Lista** etiquetas)
+{
+    int i;
+    int salto;
+
+    for(i = 0; i < numTercetos; i ++)
+    {
+        if(esSalto(i))
+        {
+            //Se busca el terceto con la variable
+            sscanf(ternas[i].arg1, "[%d]", &salto);
+            insertarInicio(*etiquetas, salto);
+        }
+    }
+
+    return;
+}
+
+int esLectura(int indice)
+{
+    if(strcmp(ternas[indice].op, "READ") == 0)
         return 1;
 
-    if(strcmp(triples[indice].op, "*") == 0)
+    return 0;    
+}
+
+int esEscritura(int indice)
+{
+    if(strcmp(ternas[indice].op, "WRITE") == 0)
         return 1;
 
-    if(strcmp(triples[indice].op, "/") == 0)
-        return 1;
-
-    return 0;
+    return 0;    
 }
 
 int esAsignacion(int indice)
 {
-    if(strcmp(triples[indice].op, ":=") == 0)
+    if(strcmp(ternas[indice].op, ":=") == 0)
         return 1;
     
+    return 0;
+}
+
+int esOperacion(int indice)
+{
+    if(strcmp(ternas[indice].op, "+") == 0)
+        return 1;
+            
+    if(strcmp(ternas[indice].op, "-") == 0)
+        return 1;
+
+    if(strcmp(ternas[indice].op, "*") == 0)
+        return 1;
+
+    if(strcmp(ternas[indice].op, "/") == 0)
+        return 1;
+
     return 0;
 }
 
 int esComparacion(int indice)
 {
-    if(strcmp(triples[indice].op, "CMP") == 0)
+    if(strcmp(ternas[indice].op, "CMP") == 0)
         return 1;
-    
-    return 0;
+
+    return 0;    
 }
 
 int esSalto(int indice)
 {
-    if(strcmp(triples[indice].op, "BGT") == 0)
+    if(strcmp(ternas[indice].op, "BGT") == 0)
         return 1;
 
-    if(strcmp(triples[indice].op, "BGE") == 0)
+    if(strcmp(ternas[indice].op, "BGE") == 0)
         return 1;
 
-    if(strcmp(triples[indice].op, "BLT") == 0)
+    if(strcmp(ternas[indice].op, "BLT") == 0)
         return 1;
 
-    if(strcmp(triples[indice].op, "BLE") == 0)
+    if(strcmp(ternas[indice].op, "BLE") == 0)
         return 1;
 
-    if(strcmp(triples[indice].op, "BEQ") == 0)
+    if(strcmp(ternas[indice].op, "BEQ") == 0)
         return 1;
 
-    if(strcmp(triples[indice].op, "BNE") == 0)
+    if(strcmp(ternas[indice].op, "BNE") == 0)
         return 1;
 
-    if(strcmp(triples[indice].op, "BI") == 0)
-        return 1;
-
-    return 0;
-}
-
-int esEtiqueta(Pila* pilaSaltos, int indice)
-{
-    if(!pilaVacia(pilaSaltos) && verTope(pilaSaltos) == triples[indice].index)
+    if(strcmp(ternas[indice].op, "BI") == 0)
         return 1;
 
     return 0;
 }
 
-int esREAD(int indice)
+int esSFP(int indice)
 {
-    if(strcmp(triples[indice].op, "READ") == 0)
+    if(strcmp(ternas[indice].op, "SFP") == 0)
         return 1;
-
-    return 0;    
-}
-
-int generarREAD(FILE* asm_file, ListaTriples* listaOperandos, int indice)
-{
-    int op1;
-
-    sscanf(triples[indice].arg1, "[%d]", &op1);
-
-    int i;
-    int symbol_tableTAM = 1000;
-    char tipo[30];
-
-    Triple* arg1 = buscarTriplePorIndice(listaOperandos, op1);
-    
-    for(i = 0; i < symbol_tableTAM; i ++)
-    {
-        if (strcmp(symbol_table[i].nombre, arg1->op) == 0)
-        {
-            strcpy(tipo, symbol_table[i].tipoDato);
-            break;
-        }
-    }
-
-    if(strcmp(tipo, "CTE_STRING") == 0)
-        fprintf(asm_file, "    getString _%s\n", arg1->op);
-    else
-        fprintf(asm_file, "    GetFloat _%s\n", arg1->op);
-
-    fprintf(asm_file, "    newLine\n\n");
-}
-
-int esWRITE(int indice)
-{
-    if(strcmp(triples[indice].op, "WRITE") == 0)
-        return 1;
-
-    return 0;    
-}
-
-void eliminarEspacios(char* src, char* dest) {
-    while (*src != '\0') {
-        if (*src != ' ') {
-            *dest = *src;
-            dest++;
-        }
-        src++;
-    }
-    *dest = '\0';
-}
-
-int esDestinoEtiquetaDeSalto(int destino)
-{
-    int i = 0;
-    for (i; i < triple_count; i++) {
-        if (esSalto(i)) {
-            int salto = -1;
-            if (sscanf(triples[i].arg1, "[%d]", &salto) == 1) {
-                if (salto == destino) {
-                    return triples[i].index; // índice del terceto salto que apunta a 'destino'
-                }
-            }
-        }
-    }
-    return 0; // No es destino de salto
-}
-
-void generarWRITE(FILE* asm_file, ListaTriples* listaOperandos, int indice)
-{
-    static int etiquetaImprimidaAnterior = -1; // para evitar imprimir etiqueta duplicada
-
-    int etiqueta = esDestinoEtiquetaDeSalto(triples[indice].index);
-
-    if (etiqueta > 0 && etiqueta != etiquetaImprimidaAnterior) {
-        fprintf(asm_file, "etiq%d:\n", etiqueta);
-        etiquetaImprimidaAnterior = etiqueta;
-    }
-
-    int op1;
-    sscanf(triples[indice].arg1, "[%d]", &op1);
-    Triple* arg1 = buscarTriplePorIndice(listaOperandos, op1);
-    if (arg1 == NULL) return;
-
-    // Limpiar cadena si tiene comillas dobles
-    char aux[100];
-    int len = strlen(arg1->op);
-    if (len >= 2 && arg1->op[0] == '"' && arg1->op[len - 1] == '"') {
-        strncpy(aux, arg1->op + 1, len - 2);
-        aux[len - 2] = '\0';
-        strcpy(arg1->op, aux);
-    }
-
-    // Buscar tipo y nombre en tabla de símbolos
-    char tipo[30] = "";
-    char nombre[100] = "";
-    int i = 0;
-    for (i; i < symbol_count; i++) {
-        if (strcmp(symbol_table[i].nombre, arg1->op) == 0) {
-            strcpy(tipo, symbol_table[i].tipoDato);
-            strcpy(nombre, symbol_table[i].nombre);
-            break;
-        }
-    }
-
-    if (strcmp(tipo, "CTE_STRING") == 0) {
-    char nombreSinEspacios[256];
-    eliminarEspacios(nombre, nombreSinEspacios);
-    fprintf(asm_file, "    displayString _%s\n", nombreSinEspacios);
-    }
-    else
-        fprintf(asm_file, "    DisplayFloat _%s\n", nombre);
-
-    fprintf(asm_file, "    newLine\n\n");
-}
-
-int esDestinoEtiquetaDeBLE(int destino) {
-    int i = 0;
-    for (i; i < triple_count; i++) {
-        if ((strcmp(triples[i].op, "BLE") == 0) || (strcmp(triples[i].op, "BLT") == 0) ||
-            (strcmp(triples[i].op, "BGE") == 0) || (strcmp(triples[i].op, "BGT") == 0) ||
-            (strcmp(triples[i].op, "BEQ") == 0) || (strcmp(triples[i].op, "BNE") == 0)) {
-            int salto = -1;
-            if (sscanf(triples[i].arg1, "[%d]", &salto) == 1) {
-                if (salto == destino) {
-                    return triples[i].index; // Retorna la etiqueta (índice del terceto que apunta)
-                }
-            }
-        }
-    }
-    return 0; // No es destino de ninguna etiqueta BLE
-}
-
-void generarAsignacion(FILE* asm_file, ListaTriples* listaOperandos, int indice)
-{
-    int op1;
-    int op2;
-
-    sscanf(triples[indice].arg1, "[%d]", &op1);
-    sscanf(triples[indice].arg2, "[%d]", &op2);
-
-    Triple* arg1 = buscarTriplePorIndice(listaOperandos, op1);
-
-    Triple* arg2 = buscarTriplePorIndice(listaOperandos, op2);
-
-    if(arg2 != NULL) 
-        fprintf(asm_file, "    fld _%s\n", arg2->op);
-
-    fprintf(asm_file, "    fst _%s\n", arg1->op);
-    fprintf(asm_file, "    ffree\n");
-
-    return;
-}
-
-void generarComparacion(FILE* asm_file, ListaTriples* listaOperandos, int indice)
-{
-    int op1;
-    int op2; 
-
-    sscanf(triples[indice].arg1, "[%d]", &op1);
-    sscanf(triples[indice].arg2, "[%d]", &op2);
-
-    //TODO: Falta cuando se tienen expresiones en las comparaciones
-    //TODO: Crear siempre una etiqueta aunque nunca se salte por si hay un WHILE
-
-    Triple* arg1 = buscarTriplePorIndice(listaOperandos, op1);
-
-    if(arg1 != NULL) 
-        fprintf(asm_file, "    fld _%s\n", arg1->op);
-
-    Triple* arg2 = buscarTriplePorIndice(listaOperandos, op2);
-
-    if(arg2 != NULL)
-        fprintf(asm_file, "    fld _%s\n", arg2->op);
-
-    fprintf(asm_file, "    fxch \n");
-    fprintf(asm_file, "    fcom \n");
-    fprintf(asm_file, "    fstsw ax\n");
-    fprintf(asm_file, "    sahf\n");
-    fprintf(asm_file, "    ffree\n");
-
-    return;
-}
-
-void generarSalto(FILE* asm_file, Pila* pilaSaltos, Pila* pilaEtiquetas, Pila* pilaEtiquetasBucle, ListaTriples* listaOperandos, int indice,Pila* pilaEtiquetasPendientes)
-{
-    int salto;
-    sscanf(triples[indice].arg1, "[%d]", &salto);
-
-    apilar(pilaSaltos, salto);
-    apilar(pilaEtiquetas, salto);  // Siempre apilamos la etiqueta para imprimir luego
-    apilar(pilaEtiquetasPendientes, salto);
-
-    if (strcmp(triples[indice].op, "BGT") == 0) {
-        fprintf(asm_file, "    jg etiq%d\n", salto);
-    }
-    else if (strcmp(triples[indice].op, "BGE") == 0) {
-        fprintf(asm_file, "    jge etiq%d\n", salto);
-    }
-    else if (strcmp(triples[indice].op, "BLT") == 0) {
-        fprintf(asm_file, "    jl etiq%d\n", salto);
-    }
-    else if (strcmp(triples[indice].op, "BLE") == 0) {
-        fprintf(asm_file, "    jle etiq%d\n", salto);
-    }
-    else if (strcmp(triples[indice].op, "BEQ") == 0) {
-        fprintf(asm_file, "    je etiq%d\n", salto);
-    }
-    else if (strcmp(triples[indice].op, "BNE") == 0) {
-        fprintf(asm_file, "    jne etiq%d\n", salto);
-    }
-    else if (strcmp(triples[indice].op, "BI") == 0) {
-        // salto incondicional, puede ser backward (bucle) o forward
-        if (triples[indice].index > salto) {
-            // salto atrás: desapilar etiqueta de bucle para imprimir
-            int etiq_bucle = desapilar(pilaEtiquetasBucle);
-            fprintf(asm_file, "    jmp etiq%d\n", etiq_bucle);
-        } else {
-            fprintf(asm_file, "    jmp etiq%d\n", salto);
-        }
-    }
-}
-
-// Función auxiliar para detectar si el terceto es parte de un OR
-int esParteDeOR(int indice) {
-    if (indice < 0 || indice >= triple_count) return 0;
-
-    if (strcmp(triples[indice].op, "BLE") != 0) return 0;
-
-    // Obtener el salto que hace BLE (la etiqueta)
-    int salto;
-    if (sscanf(triples[indice].arg1, "[%d]", &salto) != 1) return 0;
-
-    // Buscar el índice del terceto con esa etiqueta
-    // Suponemos que la etiqueta tiene índice igual al salto (o buscar en triples por index == salto)
-    int i = 0;
-    for (i; i < triple_count; i++) {
-        if (triples[i].index == salto) {
-            // Si el terceto i es un WRITE, entonces este BLE es parte de un OR
-            if (strcmp(triples[i].op, "WRITE") == 0) {
-                return 1;
-            }
-        }
-    }
 
     return 0;
 }
 
-void generarEtiqueta(FILE* asm_file, Pila* pilaEtiquetas, ListaTriples* listaOperandos, int* etiquetasImpresas)
+void generarEtiqueta(FILE** pAC, int indice)
 {
-    if (pilaVacia(pilaEtiquetas)) return;
-
-    int etiq = desapilar(pilaEtiquetas);
-
-    if (etiquetasImpresas[etiq]) return;
-    etiquetasImpresas[etiq] = 1;
-
-    fprintf(asm_file, "etiq%d:\n", etiq);
-}
-
-void generarEtiquetaBucle(FILE* asm_file, int index)
-{
-    fprintf(asm_file, "etiq%d:\n", index);
+    fprintf(*pAC, "Etiq%d:\n\n", indice);
 
     return;
 }
 
-void generarOperacion(FILE* asm_file, ListaTriples* listaOperandos, int indice)
-{
-
-    int op1;
-    int op2; 
-
-    sscanf(triples[indice].arg1, "[%d]", &op1);
-    sscanf(triples[indice].arg2, "[%d]", &op2);
-
-    Triple* arg1 = buscarTriplePorIndice(listaOperandos, op1);
-
-    if(arg1 != NULL) 
-        fprintf(asm_file, "    fld _%s\n", arg1->op);
-
-    Triple* arg2 = buscarTriplePorIndice(listaOperandos, op2);
-
-    if(arg2 != NULL)
-        fprintf(asm_file, "    fld _%s\n", arg2->op);
-
-    if(strcmp(triples[indice].op, "+") == 0)
-    {
-        fprintf(asm_file, "    fadd \n");
-        fprintf(asm_file, "    ffree 1 \n");
-    }
-
-    if(strcmp(triples[indice].op, "-") == 0)
-    {
-        fprintf(asm_file, "    fsub \n");
-        fprintf(asm_file, "    ffree 1 \n");
-    }
-
-    if(strcmp(triples[indice].op, "*") == 0)
-    {
-        fprintf(asm_file, "    fmul \n");
-        fprintf(asm_file, "    ffree 1 \n");
-    }
-
-    if(strcmp(triples[indice].op, "/") == 0)
-    {
-        fprintf(asm_file, "    fdiv \n");
-        fprintf(asm_file, "    ffree 1 \n");
-    }
-
-    return;
-}
-
-void obtenerSaltosBucles(ListaEntero* listaBucles)
+void generarLectura(FILE** pAC, int indice)
 {
     int i;
+    int indArg1;
+    char var[MAX_LONG_STR];
+    char tipoDato[MAX_LONG_TD];
 
-    for (i = 0; i < triple_count; i ++)
-    {
-        if(strcmp(triples[i].op, "BI") == 0)
-        {
-            int salto;
+    //Se busca el terceto con la variable
+    sscanf(ternas[indice].arg1, "[%d]", &indArg1);
 
-            sscanf(triples[i].arg1, "[%d]", &salto);
+    //Se accede a la variable
+    strcpy(var, ternas[indArg1].op);
+    formatearCadena(var);
 
-            if (salto < triples[i].index)
-            {
-                EnteroInsertarAlFinal(listaBucles, salto);
-            }
-        } 
-    }
-}
-
-
-void generarCodigo(FILE* asm_file)
-{
-    int i, sig;
-    int etiquetasImpresas[1000] = {0};
-    Pila* pilaSaltos;
-    Pila* pilaEtiquetas;
-    Pila* pilaEtiquetasBucle;
-    ListaTriples listaOperandos;
-    ListaEntero listaBucles;
-    Pila* pilaEtiquetasPendientes;
-    pilaEtiquetasPendientes = crearPila();
-
-    pilaSaltos = crearPila();
-    pilaEtiquetas = crearPila();
-    pilaEtiquetasBucle = crearPila();
-    EnteroCrearLista(&listaBucles);
-    inicializarLista(&listaOperandos);
-
-    obtenerSaltosBucles(&listaBucles);
-
-    for (i = 0; i < triple_count; i++)
+    //Se busca la variable
+    for(i = 0; i < numLineas; i ++)
     {   
-      if (esDestinoEtiquetaDeSalto(triples[i].index) && !etiquetasImpresas[triples[i].index]) {
-    fprintf(asm_file, "etiq%d:\n", triples[i].index);
-    etiquetasImpresas[triples[i].index] = 1;
-}
-
-        if (EnteroExisteValor(&listaBucles, triples[i].index))
+        if(strcmp(lineas[i].nombre, var) == 0)
         {
-            generarEtiquetaBucle(asm_file, etiquetas);
-            apilar(pilaEtiquetasBucle, etiquetas);
-            etiquetas ++;
+            //Se guarda su tipo de dato
+            strcpy(tipoDato,  lineas[i].tipoDato);
+            break;
         }
-
-        if(esEtiqueta(pilaSaltos, i))
-            generarEtiqueta(asm_file, pilaEtiquetas, &listaOperandos,etiquetasImpresas);
-
-        if(esOperador(i))
-            generarOperacion(asm_file, &listaOperandos, i);
-
-        if(esAsignacion(i))
-            generarAsignacion(asm_file, &listaOperandos, i);
-
-        if(esComparacion(i))
-            generarComparacion(asm_file, &listaOperandos, i);
-
-        if(esSalto(i))
-            generarSalto(asm_file, pilaSaltos, pilaEtiquetas, pilaEtiquetasBucle, &listaOperandos, i, pilaEtiquetasPendientes);
-
-        if(esREAD(i))
-            generarREAD(asm_file, &listaOperandos, i);
-
-        if(esWRITE(i))
-            generarWRITE(asm_file, &listaOperandos, i);
-
-        if(!esEtiqueta(pilaSaltos, i) && !esOperador(i) && !esAsignacion(i) && !esComparacion(i) && !esSalto(i) && !esREAD(i) && !esWRITE(i))
-            insertarTriple(&listaOperandos, triples[i]);
-
     }
-
-    while(!pilaVacia(pilaEtiquetas))
-        generarEtiqueta(asm_file, pilaEtiquetas, &listaOperandos,etiquetasImpresas);
     
-    destruirPila(pilaSaltos);
-    destruirPila(pilaEtiquetas);
-    destruirPila(pilaEtiquetasBucle);
-    liberarLista(&listaOperandos);
-    EnteroLiberarLista(&listaBucles);
-    destruirPila(pilaEtiquetasPendientes);
+    if(strcmp(tipoDato, "CTE_STRING") == 0 || strcmp(tipoDato, "VAR_STRING") == 0)
+        fprintf(*pAC, "\tgetString _%s\n", var);
+    else
+        fprintf(*pAC, "\tGetFloat _%s\n", var);
+
+    fprintf(*pAC, "\tnewLine\n\n");
+
+    return;
 }
 
-void generate_assembler(const char* output_filename)
+void generarEscritura(FILE** pAC, int indice)
 {
     int i;
+    int indArg1;
+    char aux[MAX_LONG_STR];
+    char var[MAX_LONG_STR];
+    char tipoDato[MAX_LONG_TD];
 
-    //Se abre el archivo con el Assembler en modo escritura
-    FILE* asm_file = fopen(output_filename, "w");
+    //Se busca el terceto con la variable
+    sscanf(ternas[indice].arg1, "[%d]", &indArg1);
 
-    if (!asm_file)
-        return;
+    //Se accede a la variable
+    strcpy(var, ternas[indArg1].op);
 
-    //Se imprimen la parte inicial del Assembler
-    fprintf(asm_file, "include macros2.asm\ninclude number.asm\n\n.MODEL LARGE\n.386\n.STACK 200h\n\n");
+    eliminarComillas(var);
 
-    //Se imprimen las variables
-    fprintf(asm_file, ".DATA\n");
+    if(!strstr(var, "@aux") && strcmp(var, "ANTES_REORDER") != 0 && strcmp(var, "DESPUES_REORDER") != 0)
+        formatearCadena(var);
 
-    //Se colocan todas las variables y constantes del programa
-    for (i = 0; i < symbol_count; i++)
-    {
-        char clean_name[MAX_LONG_ID];
+    //Se busca la variable
+    for(i = 0; i < numLineas; i ++)
+    {   
+        strcpy(aux, lineas[i].nombre);
+        formatearCadena(aux);
 
-        //Se reescribe el nombre del ID o CTE para guardarlo como variable en Assembler
-        clean_identifier(clean_name, symbol_table[i].nombre);
-
-        if (strcmp(symbol_table[i].tipoDato, "CTE_STRING") == 0)
-            fprintf(asm_file, "    %s db '%s', '$'\n", clean_name, symbol_table[i].valor);
-        else
-            fprintf(asm_file, "    %s dd %s\n", clean_name,
-            strcmp(symbol_table[i].valor, "-") == 0 ? "?" : symbol_table[i].valor);
-    }
-
-    //Se colocan todas las variables del compilador
-    int temp = 0;
-    int orden = 0;
-    int pivot = 0;
-    int aux = 0, contAux = 0;
-
-    for (i = 0; i < triple_count; i++)
-    {
-        char str[MAX_LONG_ID];
-
-        //Las variables del compilador son:
-        //@auxN donde N es un número
-        //@temp
-        //@orden
-        //@pivot
-
-        if(strstr(triples[i].op, "@aux") != 0)
+        if(strcmp(aux, var) == 0 || strcmp(lineas[i].nombre, var) == 0)
         {
-            sscanf(triples[i].op, "@aux%d", &aux);
-            if(aux >= contAux)
-            {
-                sprintf(str, "_aux%d", aux);
-                fprintf(asm_file, "    %s dd ?\n", str);
-
-                contAux ++;
-            }
-        }
-
-        if(strcmp(triples[i].op, "@temp") == 0 && temp == 0)
-        {
-            sprintf(str, "_temp");
-            fprintf(asm_file, "    %s dd ?\n", str);
-
-            temp = 1;
-        }
-
-        if(strcmp(triples[i].op, "@orden") == 0 && orden == 0)
-        {
-            sprintf(str, "_orden");
-            fprintf(asm_file, "    %s dd ?\n", str);
-
-            orden = 1;
-        }
-
-        if(strcmp(triples[i].op, "@pivot") == 0 && pivot == 0)
-        {
-            sprintf(str, "_pivot");
-            fprintf(asm_file, "    %s dd ?\n", str);
-
-            pivot = 1;
+            //Se guarda su tipo de dato
+            strcpy(tipoDato,  lineas[i].tipoDato);
+            break;
         }
     }
 
-    fprintf(asm_file, ".CODE\nextrn STRLEN:proc, COPIAR:proc, CONCAT:proc\n\nSTART:\n");
-    fprintf(asm_file, "    mov AX, @DATA\n    mov DS, AX\n    mov ES, AX\n");
+    if(strcmp(tipoDato, "") == 0)
+        strcpy(tipoDato, "VAR_INTEGER");
 
-    generarCodigo(asm_file);
+    if(strcmp(tipoDato, "CTE_STRING") == 0 || strcmp(tipoDato, "VAR_STRING") == 0)
+        fprintf(*pAC, "\tdisplayString _%s\n", var);
 
-    fprintf(asm_file, "    mov ax, 4C00h\n    int 21h\nEND START\n");
+    if(strcmp(tipoDato, "CTE_INTEGER") == 0 || strcmp(tipoDato, "VAR_INTEGER") == 0)
+        fprintf(*pAC, "\tDisplayInteger _%s\n", var);
 
-    fclose(asm_file);
+    if(strcmp(tipoDato, "CTE_FLOAT") == 0 || strcmp(tipoDato, "VAR_FLOAT") == 0)
+        fprintf(*pAC, "\tDisplayFloat _%s, 2\n", var);
+    
+    fprintf(*pAC, "\tnewLine\n\n");
+
+    return;
 }
 
-int generarAssembler(const char* symbol_file, const char* triple_file, const char* output_file)
+void generarAsignacion(FILE** pAC, int indice)
 {
-    //Solo carga en un vector de máximo 1000 elementos, todos los registros de la Tabla de Símbolos
-    if (load_symbol_table(symbol_file) != 0)
+
+    int i;
+    int indArg1, indArg2;
+    int existe = 0;
+    char var1[MAX_LONG_STR], var2[MAX_LONG_STR];
+
+    //Se busca el terceto con la variable
+    sscanf(ternas[indice].arg1, "[%d]", &indArg1);
+    sscanf(ternas[indice].arg2, "[%d]", &indArg2);
+
+    //Se accede a la variable
+    strcpy(var1, ternas[indArg1].op);
+    strcpy(var2, ternas[indArg2].op);
+
+    //Se busca la variable de origen
+    for(i = 0; i < numLineas; i ++)
+    {   
+        if(strcmp(lineas[i].nombre, var2) == 0)
+        {
+            //Si llego acá es porque es una variable o constante
+            formatearNumero(var2);
+            existe = 1;
+            break;
+        }
+    }
+
+    if(existe)
+        fprintf(*pAC, "\tFLD _%s\n", var2);
+
+    fprintf(*pAC, "\tFST _%s\n", var1);
+    fprintf(*pAC, "\tFFREE\n\n");
+
+    return;
+}
+
+void generarOperacion(FILE** pAC, int indice)
+{
+
+    int i;
+    int indArg1, indArg2;
+    int existe1 = 0, existe2 = 0;
+    char var1[MAX_LONG_STR], var2[MAX_LONG_STR];
+
+    //Se busca el terceto con la variable
+    sscanf(ternas[indice].arg1, "[%d]", &indArg1);
+    sscanf(ternas[indice].arg2, "[%d]", &indArg2);
+
+    //Se accede a la variable
+    strcpy(var1, ternas[indArg1].op);
+    strcpy(var2, ternas[indArg2].op);
+
+    //Se busca la variable de origen
+    for(i = 0; i < numLineas; i ++)
+    {   
+        //Si llego acá es porque es una variable
+        if(strcmp(lineas[i].nombre, var1) == 0)
+        {
+            formatearNumero(var1);
+            existe1 = 1;
+        }
+        
+        //Si llego acá es porque es una variable
+        if(strcmp(lineas[i].nombre, var2) == 0)
+        {
+            formatearNumero(var2);
+            existe2 = 1;
+        }
+    }
+
+    if(existe1)
+        fprintf(*pAC, "\tFLD _%s\n", var1);
+    if(existe2)
+        fprintf(*pAC, "\tFLD _%s\n", var2);
+
+    if(indArg1 < indArg2 - 1)
+        fprintf(*pAC, "\tFXCH \n");
+
+    if(strcmp(ternas[indice].op, "+") == 0)
+        fprintf(*pAC, "\tFADD\n");
+            
+    if(strcmp(ternas[indice].op, "-") == 0)
+        fprintf(*pAC, "\tFSUB\n");
+
+    if(strcmp(ternas[indice].op, "*") == 0)
+        fprintf(*pAC, "\tFMUL\n");
+
+    if(strcmp(ternas[indice].op, "/") == 0)
+        fprintf(*pAC, "\tFDIV\n");
+
+    fprintf(*pAC, "\tFFREE ST(1)\n\n");
+
+    return;
+}
+
+void generarComparacion(FILE** pAC, int indice)
+{
+    //TODO: Revisar comparaciones, no funciona comparando expresiones complejas
+    int i;
+    int indArg1, indArg2;
+    int existe1 = 1, existe2 = 1;
+    char var1[MAX_LONG_STR], var2[MAX_LONG_STR];
+
+    //Se busca el terceto con la variable
+    sscanf(ternas[indice].arg1, "[%d]", &indArg1);
+    sscanf(ternas[indice].arg2, "[%d]", &indArg2);
+
+    //Se accede a la variable
+    strcpy(var1, ternas[indArg1].op);
+    strcpy(var2, ternas[indArg2].op);
+    formatearNumero(var1);
+    formatearNumero(var1);
+
+    fprintf(*pAC, "\tFLD _%s\n", var1);
+    fprintf(*pAC, "\tFLD _%s\n", var2);
+
+    fprintf(*pAC, "\tFXCH \n");
+    fprintf(*pAC, "\tFCOM \n");
+    fprintf(*pAC, "\tFSTSW AX\n");
+    fprintf(*pAC, "\tSAHF\n");
+    fprintf(*pAC, "\tFFREE\n\n");
+
+    return;
+}
+
+void generarSalto(FILE** pAC, int indice)
+{
+    int salto;
+
+    //Se busca el terceto donde saltar
+    sscanf(ternas[indice].arg1, "[%d]", &salto);
+
+    if (strcmp(ternas[indice].op, "BGT") == 0)
+        fprintf(*pAC, "\tJA Etiq%d\n\n", salto);
+
+    if (strcmp(ternas[indice].op, "BGE") == 0)
+        fprintf(*pAC, "\tJNB Etiq%d\n\n", salto);
+
+    if (strcmp(ternas[indice].op, "BLT") == 0) 
+        fprintf(*pAC, "\tJB Etiq%d\n\n", salto);
+    
+    if (strcmp(ternas[indice].op, "BLE") == 0) 
+        fprintf(*pAC, "\tJNA Etiq%d\n\n", salto);
+    
+    if (strcmp(ternas[indice].op, "BEQ") == 0) 
+        fprintf(*pAC, "\tJE Etiq%d\n\n", salto);
+    
+    if (strcmp(ternas[indice].op, "BNE") == 0) 
+        fprintf(*pAC, "\tJNE Etiq%d\n\n", salto);
+
+    if (strcmp(ternas[indice].op, "BI") == 0) 
+        fprintf(*pAC, "\tJMP Etiq%d\n\n", salto);
+    
+    return;
+}
+
+void generarSFP(FILE** pAC, int indice)
+{
+    int i;
+    char var1[MAX_LONG_STR];
+    char linea[MAX_TAM_LINEA];
+
+    //Se accede a la variable
+    strcpy(var1, ternas[indice].op);
+
+    //fprintf(*pAC, "\tFLD _%s\n", var1);
+
+    for(i = 0; i < numLineas; i ++)
+    {
+        if(strcmp(lineas[i].nombre, var1) == 0)
+            return;
+    }
+
+    strcpy(lineas[numLineas].nombre, var1);
+    strcpy(lineas[numLineas].tipoDato, "CTE_INTEGER");
+    strcpy(lineas[numLineas].valor, var1);
+    lineas[numLineas].longitud = strlen(var1);
+
+    numLineas ++;
+
+    fclose(*pAC);
+
+    *pAC = fopen("./Outputs/Final.asm", "r");
+    FILE* temporal = fopen("temporal.asm", "w");
+
+    if (!*pAC || !temporal) {
+        perror("Error abriendo archivos");
+        return;
+    }
+
+    bool dentroData = false;
+    bool variableAgregada = false;
+    char nombreVariable[MAX_LONG_STR];
+    sprintf(nombreVariable, "_%s", var1); // prefijo "_" para nombre asm
+
+    while (fgets(linea, sizeof(linea), *pAC)) {
+        fputs(linea, temporal);
+
+        // Detectar la sección .DATA
+        if (strstr(linea, ".DATA"))
+            dentroData = true;
+
+        // Si estamos dentro de .DATA y no hemos agregado aún la variable
+        else if (dentroData && !variableAgregada && linea[0] == '\n') {
+            fprintf(temporal, "\t%s\tdd\t%.d\n", nombreVariable, atoi(var1));
+            variableAgregada = true;
+        }
+    }
+
+    fclose(*pAC);
+    fclose(temporal);
+
+    remove("./Outputs/Final.asm");
+    rename("temporal.asm", "./Outputs/Final.asm");
+
+    *pAC = fopen("./Outputs/Final.asm", "a+t");
+
+    return;
+}
+
+void formatearCadena(char *cadena)
+{
+    //Se reemplazan los caracteres especiales por guiones bajos
+    while(*cadena)
+    {
+        if (!esLetra(*cadena) && !esNumero(*cadena))
+            *cadena = '_';
+
+        cadena++;
+    }
+
+    return;
+}
+
+void formatearNumero(char *numero)
+{
+    //Si es un numero negativo
+    if(*numero == '-')
+        *numero = '@';
+
+    //Si es un float
+    while(*numero)
+    {
+        if (*numero == '.')
+            *numero = '_';
+
+        numero++;
+    }
+
+    return;
+}
+
+void eliminarComillas(char *cadena)
+{
+    int len = strlen(cadena);
+
+    if (len >= 2 && cadena[0] == '"' && cadena[len - 1] == '"')
+    {
+        memmove(cadena, cadena + 1, len - 2);
+        cadena[len - 2] = '\0';
+    }
+
+    return;
+}
+
+int esLetra(char caracter)
+{
+    if(caracter >= 'A' && caracter <= 'Z')
         return 1;
 
-    //Solo carga en un vector de máximo MAX_TRIPLES elementos, todos los tercetos
-    if (load_triples(triple_file) != 0)
+    if(caracter >= 'a' && caracter <= 'z')
         return 1;
-
-    generate_assembler(output_file);
-
+    
     return 0;
 }
 
-void inicializarLista(ListaTriples* lista) {
-    lista->cabeza = NULL;
-}
-
-int insertarTriple(ListaTriples* lista, Triple t) {
-    NodoLista* nuevo = (NodoLista*)malloc(sizeof(NodoLista));
-    if (!nuevo) return 0; // fallo de memoria
-
-    nuevo->triple = t;
-    nuevo->sig = lista->cabeza;
-    lista->cabeza = nuevo;
-
-    return 1;
-}
-
-Triple* buscarTriplePorIndice(ListaTriples* lista, int index) {
-    NodoLista* actual = lista->cabeza;
-    while (actual != NULL) {
-        if (actual->triple.index == index)
-            return &(actual->triple);
-        actual = actual->sig;
-    }
-    return NULL;
-}
-
-int eliminarTriplePorIndice(ListaTriples* lista, int index) {
-    NodoLista* actual = lista->cabeza;
-    NodoLista* anterior = NULL;
-
-    while (actual != NULL) {
-        if (actual->triple.index == index) {
-            if (anterior == NULL) {
-                lista->cabeza = actual->sig;
-            } else {
-                anterior->sig = actual->sig;
-            }
-            free(actual);
-            return 1; // eliminado con éxito
-        }
-        anterior = actual;
-        actual = actual->sig;
-    }
-    return 0; // no encontrado
-}
-
-void mostrarLista(ListaTriples lista) {
-    NodoLista* actual = lista.cabeza;
-    while (actual != NULL) {
-        printf("[%d] (%s, %s, %s)\n", actual->triple.index,
-               actual->triple.op, actual->triple.arg1, actual->triple.arg2);
-        actual = actual->sig;
-    }
-}
-
-void liberarLista(ListaTriples* lista) {
-    NodoLista* actual = lista->cabeza;
-    while (actual != NULL) {
-        NodoLista* temp = actual;
-        actual = actual->sig;
-        free(temp);
-    }
-    lista->cabeza = NULL;
-}
-
-void EnteroCrearLista(ListaEntero* lista) {
-    lista->cabeza = NULL;
-    lista->tamanio = 0;
-}
-
-void EnteroInsertarAlFinal(ListaEntero* lista, int valor) {
-    NodoEntero* nuevo = (NodoEntero*)malloc(sizeof(NodoEntero));
-    nuevo->dato = valor;
-    nuevo->siguiente = NULL;
-
-    if (lista->cabeza == NULL) {
-        lista->cabeza = nuevo;
-    } else {
-        NodoEntero* actual = lista->cabeza;
-        while (actual->siguiente != NULL)
-            actual = actual->siguiente;
-        actual->siguiente = nuevo;
-    }
-
-    lista->tamanio++;
-}
-
-void EnteroEliminarValor(ListaEntero* lista, int valor) {
-    NodoEntero* actual = lista->cabeza;
-    NodoEntero* anterior = NULL;
-
-    while (actual != NULL && actual->dato != valor) {
-        anterior = actual;
-        actual = actual->siguiente;
-    }
-
-    if (actual == NULL) return;
-
-    if (anterior == NULL) {
-        lista->cabeza = actual->siguiente;
-    } else {
-        anterior->siguiente = actual->siguiente;
-    }
-
-    free(actual);
-    lista->tamanio--;
-}
-
-int EnteroObtenerElemento(ListaEntero* lista, int indice) {
-    if (indice < 0 || indice >= lista->tamanio) return -1;
-
-    NodoEntero* actual = lista->cabeza;
-    int i = 0;
-    for (i; i < indice; i++)
-        actual = actual->siguiente;
-
-    return actual->dato;
-}
-
-int EnteroObtenerTamanio(ListaEntero* lista) {
-    return lista->tamanio;
-}
-
-void EnteroMostrarLista(ListaEntero* lista) {
-    NodoEntero* actual = lista->cabeza;
-    printf("[");
-    while (actual != NULL) {
-        printf("%d", actual->dato);
-        if (actual->siguiente != NULL) printf(", ");
-        actual = actual->siguiente;
-    }
-    printf("]\n");
-}
-
-void EnteroLiberarLista(ListaEntero* lista) {
-    NodoEntero* actual = lista->cabeza;
-    while (actual != NULL) {
-        NodoEntero* siguiente = actual->siguiente;
-        free(actual);
-        actual = siguiente;
-    }
-    lista->cabeza = NULL;
-    lista->tamanio = 0;
-}
-
-int EnteroExisteValor(ListaEntero* lista, int valor) {
-    NodoEntero* actual = lista->cabeza;
-
-    while (actual != NULL) {
-        if (actual->dato == valor)
-            return 1; // Verdadero: el valor existe
-        actual = actual->siguiente;
-    }
-
-    return 0; // Falso: no se encontró el valor
+int esNumero(char caracter)
+{
+    if(caracter >= '0' && caracter <= '9')
+        return 1;
+    
+    return 0;
 }

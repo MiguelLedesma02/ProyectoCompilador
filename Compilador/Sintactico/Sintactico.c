@@ -5,13 +5,13 @@
 int setTipoDato(FILE *pf, FILE *ptemp, char* tipoDato)
 {
     if(strcmp(tipoDato, "int") == 0)
-        strcpy(tipoDato, "CTE_INTEGER");
+        strcpy(tipoDato, "VAR_INTEGER");
 
     else if(strcmp(tipoDato, "float") == 0)
-        strcpy(tipoDato, "CTE_FLOAT");
+        strcpy(tipoDato, "VAR_FLOAT");
 
     else if(strcmp(tipoDato, "string") == 0)
-        strcpy(tipoDato, "CTE_STRING");
+        strcpy(tipoDato, "VAR_STRING");
     
     int i = 0;
     for(i; i < cantVarEnLinea; i ++)
@@ -96,9 +96,9 @@ int generarCondicion(char* condicion)
     char td[MAX_LONG_TD];
 
     if(auxTD == 1)
-        strcpy(td, "CTE_INTEGER");
+        strcpy(td, "INTEGER");
     else
-        strcpy(td, "CTE_FLOAT");
+        strcpy(td, "FLOAT");
 
     if(strcmp(ETDind, td) != 0)
         yyerror("No se pueden comparar tipos de datos incompatibles.");
@@ -112,46 +112,6 @@ int generarCondicion(char* condicion)
     apilar(Bpila, indice);
 
     return indice;
-    // int indice;
-    // int parteIzq = desapilar(Bpila);
-    // int parteDer = Eind;
-    // char op1[10], op2[10];
-    // int auxTD = desapilar(ETDpila);
-    // char td[MAX_LONG_TD];
-
-    // if (auxTD == 1)
-    //     strcpy(td, "CTE_INTEGER");
-    // else
-    //     strcpy(td, "CTE_FLOAT");
-
-    // if (strcmp(ETDind, td) != 0)
-    //     yyerror("No se pueden comparar tipos de datos incompatibles.");
-
-    // sprintf(op1, "[%d]", parteIzq);
-    // sprintf(op2, "[%d]", parteDer);
-    // crearTerceto("CMP", op1, op2);
-
-    // // Mapear correctamente el operador de comparación
-    // char jump_op[MAX_LONG_STR];
-    // if (strcmp(condicion, "<") == 0)
-    //     strcpy(jump_op, "BLT");
-    // else if (strcmp(condicion, ">") == 0)
-    //     strcpy(jump_op, "BGT");
-    // else if (strcmp(condicion, ">=") == 0)
-    //     strcpy(jump_op, "BGE");
-    // else if (strcmp(condicion, "<=") == 0)
-    //     strcpy(jump_op, "BLE");
-    // else if (strcmp(condicion, "==") == 0)
-    //     strcpy(jump_op, "BEQ");
-    // else if (strcmp(condicion, "!=") == 0)
-    //     strcpy(jump_op, "BNE");
-    // else
-    //     strcpy(jump_op, condicion); // Por si ya es un operador de salto
-
-    // indice = crearTerceto(jump_op, "_", "_");
-    // apilar(Bpila, indice);
-
-    // return indice;
 }
 
 void negarCondicion(int indice)
@@ -210,47 +170,13 @@ void generarWhile()
         completarTerceto(aux, opAux);
     }
 
-    while(!pilaVacia(ANDPila))
+    while(!pilaVacia(ANDPila) && verTope(ANDPila) != 0)
     {
         int aux = desapilar(ANDPila);
         completarTerceto(aux, op);
     }
 
     return;
-    // int inicioWhile;
-    // int finWhile;
-    // int salto;
-    // char op[10];
-
-    // salto = desapilar(Bpila); // e.g., [10] para x > 4
-    // inicioWhile = desapilar(Bpila); // e.g., [3] para inicio de condición
-    // sprintf(op, "[%d]", inicioWhile);
-    // finWhile = crearTerceto("BI", op, "_"); // [18] (BI, [3], _)
-    // sprintf(op, "[%d]", finWhile + 1); // [19]
-    // // No completar 'salto' aquí, ya que ORPila maneja los saltos al bloque
-
-    // char opAux[10];
-    // int inicioBloque = desapilar(AUXPila); // e.g., [11]
-    // sprintf(opAux, "[%d]", inicioBloque);
-
-    // // Manejo de OR: Completar con el índice del bloque sin negar
-    // while (!pilaVacia(ORPila))
-    // {
-    //     int aux = desapilar(ORPila); // e.g., [6] para x < 10, [10] para x > 4
-    //     completarTerceto(aux, opAux); // Completa con [11]
-    // }
-
-    // // Manejo de AND: Completar con la salida
-    // while (!pilaVacia(ANDPila))
-    // {
-    //     int aux = desapilar(ANDPila);
-    //     completarTerceto(aux, op);
-    // }
-
-    // // Agregar terceto de salida explícito
-    // crearTerceto("END", "_", "_"); // [19] (END, _, _)
-
-    // return;
 }
 
 void generarIf()
@@ -276,7 +202,7 @@ void generarIf()
         completarTerceto(aux, opAux);
     }
 
-    while(!pilaVacia(ANDPila))
+    while(!pilaVacia(ANDPila) && verTope(ANDPila) != 0)
     {
         int aux = desapilar(ANDPila);
         completarTerceto(aux, op);
@@ -379,6 +305,9 @@ int sumarPrimos(int n)
     int contador = 0;
     int numero = 2;
 
+    if(n <= 0)
+        yyerror("El parametro de SFP debe ser positivo.");
+
     while (contador < n)
     {
         if (esPrimo(numero))
@@ -405,7 +334,7 @@ int esPrimo(int n)
     return 1;
 }
 
-void reorder(char* o, char* p)
+void reorder(char* o, char* p, int tam)
 {
     char op1[10];
     char op2[10];
@@ -430,15 +359,15 @@ void reorder(char* o, char* p)
     validarParametrosReorder(orden, pivot);
 
     if(orden)
-        reorderIzquierda(pivot); 
+        reorderIzquierda(pivot, tam); 
     else
-        reorderDerecha(pivot);
+        reorderDerecha(pivot, tam);
     varAux = 0;
 
     return;
 }
 
-void reorderIzquierda(int pivot)
+void reorderIzquierda(int pivot, int tam)
 {
     // pivot: Es la posición que se usa como referencia para el reordenamiento.
 
@@ -491,10 +420,19 @@ void reorderIzquierda(int pivot)
         inicio ++;
     }
 
+    int i;
+    for(i = 0; i < tam; i ++)
+    {
+        sprintf(auxInicial, "@aux%d", i);
+        int aux = crearTerceto(auxInicial, "_", "_");
+        sprintf(op1, "[%d]", aux);
+        crearTerceto("WRITE", op1, "_");
+    }
+
     return;
 }
 
-void reorderDerecha(int pivot)
+void reorderDerecha(int pivot, int tam)
 {
     // pivot: Es la posición que se usa como referencia para el reordenamiento.
 
@@ -547,6 +485,15 @@ void reorderDerecha(int pivot)
         fin--;
     }
 
+    int i;
+    for(i = 0; i < tam; i ++)
+    {
+        sprintf(auxInicial, "@aux%d", i);
+        int aux = crearTerceto(auxInicial, "_", "_");
+        sprintf(op1, "[%d]", aux);
+        crearTerceto("WRITE", op1, "_");
+    }
+
     return;
 }
 
@@ -565,7 +512,7 @@ void validarParametrosReorder(int orden, int pivot)
         yyerror("No se puede reordenar hacia la izquierda cuando el pivot es el primer elemento.");
 
     //Si el pivot es el último elemento, no se puede reordenar hacia la derecha.
-    if(!orden && pivot == varAux)
+    if(!orden && pivot == varAux-1)
         yyerror("No se puede reordenar hacia la derecha cuando el pivot es el ultimo elemento.");
 
     return;
